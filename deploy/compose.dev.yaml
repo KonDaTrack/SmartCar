@@ -4,6 +4,7 @@ x-common-env: &common-env
   ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
   RMW_IMPLEMENTATION: ${RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
   SMARTCAR_CONFIG_DIR: /config
+  SMARTCAR_HOST_IP: ${DEV_IP:-192.168.100.123}
 
 x-logging: &default-logging
   driver: json-file

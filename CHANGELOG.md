@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Wire the LSLIDAR C16 (`192.168.100.201`) and LakiBeam left/right
+  (`192.168.100.200/.210`) drivers into `sensors.launch.py`.
+- Add `config/lslidar_cx.yaml` with the site IP, frame and topic settings.
+- Add `SMARTCAR_HOST_IP` to the dev/vehicle compose environments.
 - Run containers as a non-root `smartcar` user (UID/GID 1000) instead of root.
   The ROS base images have no `ubuntu` user; the user is created in the image.
 - Added `dialout`/`video`/`render` group handling for the VX1000 serial device
