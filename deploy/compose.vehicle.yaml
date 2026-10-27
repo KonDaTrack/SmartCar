@@ -5,6 +5,9 @@ x-common-env: &common-env
   RMW_IMPLEMENTATION: ${RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
   SMARTCAR_CONFIG_DIR: /config
   SMARTCAR_HOST_IP: ${VEHICLE_IP:-192.168.100.10}
+  SMARTCAR_START_INS: ${SMARTCAR_START_INS:-1}
+  SMARTCAR_START_CHASSIS: ${SMARTCAR_START_CHASSIS:-1}
+  SMARTCAR_VX1000_PORT: /dev/ttyUSB0
 
 x-logging: &default-logging
   driver: json-file

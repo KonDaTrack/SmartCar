@@ -41,10 +41,15 @@ RUN apt-get update \
 COPY docker/create-user.sh /tmp/create-user.sh
 RUN bash /tmp/create-user.sh && rm -f /tmp/create-user.sh
 
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 ENV ROS_DISTRO=${ROS_DISTRO}
 ENV HOME=/home/smartcar
 WORKDIR /ws
 USER smartcar
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["bash"]
 
 # ---------------------------------------------------------------------------
 # Builder: source is copied and compiled. Do NOT use --symlink-install here:

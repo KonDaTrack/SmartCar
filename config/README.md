@@ -3,6 +3,8 @@
 - `network.yaml` is the single source of truth for IPs, interfaces, ports and hosts.
 - `common.yaml` holds shared ROS defaults.
 - `dev.yaml` / `vehicle.yaml` are site overrides.
+- `chassis.yaml` holds the JD01 gateway, odometry and steering-calibration
+  parameters loaded by `chassis.launch.py`.
 - `calibration/` holds extrinsics/intrinsics and time offsets.
 - `rviz/` holds RViz configs used by the dev `rviz` container.
 

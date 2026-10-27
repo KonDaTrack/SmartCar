@@ -2,17 +2,21 @@
 
 ROS 2 Humble + Docker workspace for the SmartCar vehicle.
 
-**Status: skeleton.** The image / container / release / deploy workflow is in place. Actual sensor, chassis and SLAM nodes are still TODO: the launch files currently start a `keepalive` placeholder so containers and the workflow can be tested end to end.
+**Status: drivers in progress.** The image / container / release / deploy
+workflow is in place. LiDAR wiring, the VX1000 INS/IMU/GNSS serial driver and
+the JD01 chassis gateway + wheel odometry are implemented and were verified on
+the vehicle. SLAM, calibration and health checks remain TODO.
 
 ## Architecture
 
 - **2 images**
   - `smartcar-ros2:dev` — ROS 2 Humble desktop, build tools, RViz, rosbag2 MCAP/zstd. Source is bind-mounted; fast iteration.
   - `smartcar-ros2:<version>` — runtime image. Source is compiled into the image; no build tools, no GUI.
-- **Vehicle: 2 containers (start state)**
-  - `sensors` — LSLIDAR C16, LakiBeam left/right, VX1000. Chassis starts here too.
+- **Vehicle: separate containers**
+  - `sensors` — LSLIDAR C16, LakiBeam left/right, VX1000 (`SMARTCAR_START_INS=1`).
+  - `chassis` — CAN gateway receiver and odometry (`SMARTCAR_START_CHASSIS=1`).
   - `slam` — SLAM / localization / map.
-  - `chassis` can be split out later; `vehicle` combined profile is kept for debugging.
+  - `vehicle` combined profile is kept for debugging.
 - **Dev machine: 3 services**
   - `dev` — interactive shell with `src/` and `config/` mounted.
   - `rviz` — X11 + NVIDIA GPU visualization.
@@ -100,10 +104,29 @@ release-manifests/  small release manifests committed to Git
 9. 100M LAN: visualize a downsampled cloud; avoid full-resolution visualization + full-resolution bag recording at the same time.
 10. Containers run as non-root `smartcar` (UID 1000); do not run the stack as root inside the container.
 
+## Drivers
+
+- `smartcar_ins` — VX1000 on `/dev/ttyUSB0` @ 460800. Publishes
+  `/VX1000_ins|imu|gnss|stat|cov|odom` plus standard `/imu/data` and
+  `/gnss/fix`.
+- `smartcar_chassis` — receives the `.110` CAN-over-UDP stream on port 8002,
+  publishes `/vehicle_status`, and integrates it into `/odom` + TF
+  `odom -> base_footprint` (JD01 Ackermann, `wheel_base=1.2`).
+- Site parameters live in `config/chassis.yaml`. The axle geometry and the
+  `steer_scale` / `steer_angle_scale` heading calibration must be checked on
+  the real vehicle.
+- Offline regression (synthetic serial + UDP frames):
+
+  ```bash
+  docker compose -f deploy/compose.dev.yaml run --rm \
+    -e ROS_DOMAIN_ID=77 dev python3 /ws/tools/smoke_test.py
+  ```
+
 ## Not implemented yet
 
-- LSLIDAR / LakiBeam / VX1000 driver wiring.
-- `smartcar_chassis` ROS 2 node for the `.110` CAN-Ethernet gateway.
+- INS navigation initialization / RTK configuration; `ins_lat/lon` stay zero
+  while `navi_tick=1`.
+- Chassis steering calibration for the small vehicle (legacy `/31.48` divisor).
 - SLAM launch and parameters.
 - Calibration files and RViz configuration.
 - Real health checks (topic rate, TF, SLAM output).

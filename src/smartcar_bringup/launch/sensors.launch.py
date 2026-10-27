@@ -2,6 +2,7 @@ import os
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, LogInfo
+from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 
@@ -45,7 +46,30 @@ def generate_launch_description():
             default_value=os.environ.get('SMARTCAR_HOST_IP', '192.168.100.123'),
             description='Host IP that the LakiBeam sensors send UDP scans to',
         ),
+        DeclareLaunchArgument(
+            'start_ins',
+            default_value=os.environ.get('SMARTCAR_START_INS', '0'),
+            description='Start the VX1000 serial driver (only on the vehicle)',
+        ),
         LogInfo(msg=['[smartcar:sensors] config_dir=', config_dir, ' host_ip=', host_ip]),
+
+        # VX1000 integrated navigation unit on /dev/ttyUSB0. Off by default so
+        # the dev machine can run this launch file without the serial device.
+        Node(
+            package='smartcar_ins',
+            executable='vx1000_node',
+            name='vx1000_node',
+            output='screen',
+            emulate_tty=True,
+            condition=IfCondition(LaunchConfiguration('start_ins')),
+            parameters=[{
+                'port': os.environ.get('SMARTCAR_VX1000_PORT', '/dev/ttyUSB0'),
+                'baudrate': 460800,
+                'frame_id': 'vx1000_link',
+                'imu_frame_id': 'vx1000_imu',
+                'gnss_frame_id': 'vx1000_gnss',
+            }],
+        ),
 
         # LSLIDAR C16 (3D), ROS 2 CX driver. Namespace /cx matches the vendor
         # parameter file key. Remap the vendor topic to the project topic.

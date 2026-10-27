@@ -7,6 +7,12 @@ find_package(std_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/VehicleStatus.msg"
+  "msg/Vx1000Ins.msg"
+  "msg/Vx1000Imu.msg"
+  "msg/Vx1000Gnss.msg"
+  "msg/Vx1000Stat.msg"
+  "msg/Vx1000Cov.msg"
+  "msg/Vx1000Odom.msg"
   DEPENDENCIES std_msgs
 )
 
