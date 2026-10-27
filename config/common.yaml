@@ -1,0 +1,30 @@
+# Shared defaults. Site-specific overrides: dev.yaml / vehicle.yaml.
+ros_domain_id: 42
+
+dds:
+  # Override in dev.yaml / vehicle.yaml with the wired interface.
+  interface: auto
+  rmw: rmw_fastrtps_cpp
+
+topics:
+  lidar_3d: /lslidar_point_cloud
+  scan_left: /scan_left
+  scan_right: /scan_right
+  imu: /VX1000_imu
+  gnss: /VX1000_gnss
+  vehicle_status: /vehicle_status
+  odom: /odom
+  map: /map
+
+frames:
+  base: base_link
+  lidar_3d: rslidar
+  laser_left: laser_left
+  laser_right: laser_right
+  imu: imu_link
+  gps: gps
+
+rosbag:
+  storage: mcap
+  compression_mode: file
+  compression_format: zstd

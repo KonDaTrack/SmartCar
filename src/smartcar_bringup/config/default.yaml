@@ -1,0 +1,5 @@
+smartcar:
+  mode: skeleton
+  config_dir: /config
+  ros_domain_id: 42
+  notes: "Placeholder defaults; site overrides live in /config/*.yaml"

@@ -1,0 +1,64 @@
+name: smartcar-vehicle
+
+x-common-env: &common-env
+  ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
+  RMW_IMPLEMENTATION: ${RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
+  SMARTCAR_CONFIG_DIR: /config
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  sensors:
+    image: ${IMAGE:-smartcar-ros2}:${IMAGE_TAG:-dev}
+    network_mode: host
+    ipc: host
+    environment: *common-env
+    devices:
+      - ${VX1000_DEVICE:-/dev/ttyUSB0}:/dev/ttyUSB0
+    volumes:
+      - ${SMARTCAR_CONFIG_HOST_DIR:-../config}:/config:ro
+    command: ros2 launch smartcar_bringup sensors.launch.py
+    restart: unless-stopped
+    logging: *default-logging
+
+  slam:
+    image: ${IMAGE:-smartcar-ros2}:${IMAGE_TAG:-dev}
+    network_mode: host
+    ipc: host
+    environment: *common-env
+    volumes:
+      - ${SMARTCAR_CONFIG_HOST_DIR:-../config}:/config:ro
+    command: ros2 launch smartcar_bringup slam.launch.py
+    restart: unless-stopped
+    logging: *default-logging
+    # cpuset: "2-3"
+
+  chassis:
+    image: ${IMAGE:-smartcar-ros2}:${IMAGE_TAG:-dev}
+    network_mode: host
+    ipc: host
+    environment: *common-env
+    volumes:
+      - ${SMARTCAR_CONFIG_HOST_DIR:-../config}:/config:ro
+    command: ros2 launch smartcar_bringup chassis.launch.py
+    restart: unless-stopped
+    profiles: [chassis]
+    logging: *default-logging
+
+  vehicle:
+    image: ${IMAGE:-smartcar-ros2}:${IMAGE_TAG:-dev}
+    network_mode: host
+    ipc: host
+    environment: *common-env
+    devices:
+      - ${VX1000_DEVICE:-/dev/ttyUSB0}:/dev/ttyUSB0
+    volumes:
+      - ${SMARTCAR_CONFIG_HOST_DIR:-../config}:/config:ro
+    command: ros2 launch smartcar_bringup vehicle.launch.py
+    restart: unless-stopped
+    profiles: [combined]
+    logging: *default-logging

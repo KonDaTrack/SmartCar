@@ -1,0 +1,27 @@
+# ROS 2 / colcon
+build/
+install/
+log/
+__pycache__/
+*.py[cod]
+
+# Docker / release artifacts
+releases/
+*.tar
+*.tar.gz
+*.tar.zst
+*.bag
+.env
+
+# Bags and large calibration data
+bags/*
+!bags/.gitkeep
+config/calibration/*.bag
+config/calibration/*.pcd
+config/calibration/*.ply
+
+# Editors / OS
+.vscode/
+.idea/
+*.swp
+.DS_Store

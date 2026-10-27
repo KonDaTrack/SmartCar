@@ -1,0 +1,102 @@
+name: smartcar-dev
+
+x-common-env: &common-env
+  ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
+  RMW_IMPLEMENTATION: ${RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
+  SMARTCAR_CONFIG_DIR: /config
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  dev:
+    image: ${IMAGE:-smartcar-ros2}:dev
+    network_mode: host
+    ipc: host
+    stdin_open: true
+    tty: true
+    working_dir: /ws
+    environment: *common-env
+    volumes:
+      - ..:/ws
+      - ../config:/config:ro
+      - ../bags:/bags
+    command: bash
+
+  sensors:
+    image: ${IMAGE:-smartcar-ros2}:dev
+    network_mode: host
+    ipc: host
+    working_dir: /ws
+    environment: *common-env
+    volumes:
+      - ..:/ws
+      - ../config:/config:ro
+    command: ros2 launch smartcar_bringup sensors.launch.py
+    profiles: [split]
+    logging: *default-logging
+
+  slam:
+    image: ${IMAGE:-smartcar-ros2}:dev
+    network_mode: host
+    ipc: host
+    working_dir: /ws
+    environment: *common-env
+    volumes:
+      - ..:/ws
+      - ../config:/config:ro
+    command: ros2 launch smartcar_bringup slam.launch.py
+    profiles: [split]
+    logging: *default-logging
+
+  rviz:
+    image: ${IMAGE:-smartcar-ros2}:dev
+    network_mode: host
+    ipc: host
+    runtime: nvidia
+    environment:
+      <<: *common-env
+      DISPLAY: ${DISPLAY:-:1}
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: all
+      __GLX_VENDOR_LIBRARY_NAME: nvidia
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ../config:/config:ro
+    command: rviz2
+    profiles: [viz]
+    logging: *default-logging
+
+  record:
+    image: ${IMAGE:-smartcar-ros2}:dev
+    network_mode: host
+    ipc: host
+    working_dir: /ws
+    environment:
+      <<: *common-env
+      BAGS_DIR: /bags
+    volumes:
+      - ..:/ws
+      - ../config:/config:ro
+      - ../bags:/bags
+    command: /ws/tools/record.sh
+    profiles: [record]
+    logging: *default-logging
+
+  replay:
+    image: ${IMAGE:-smartcar-ros2}:dev
+    network_mode: host
+    ipc: host
+    working_dir: /ws
+    environment:
+      <<: *common-env
+      BAG: ${BAG:-latest}
+    volumes:
+      - ..:/ws
+      - ../config:/config:ro
+      - ../bags:/bags
+    command: bash -lc 'ros2 bag play "/bags/$${BAG}" --clock'
+    profiles: [replay]

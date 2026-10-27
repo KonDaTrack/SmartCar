@@ -1,0 +1,15 @@
+repositories:
+  lslidar_cx_ros2:
+    type: git
+    url: https://github.com/Leishen-Lidar/LSLIDAR_CX_ROS2_DRIVER.git
+    # TODO: pin to a tag/commit before the first release.
+    version: main
+
+  lakibeam_ros2:
+    type: git
+    url: https://github.com/RichbeamTechnology/Lakibeam_ROS2_Driver.git
+    # TODO: pin to a tag/commit before the first release.
+    version: main
+
+# Not used: Intel RealSense (camera is intentionally not started/recorded),
+# ROS 1 bridge (full ROS 2 migration), Foxglove (RViz on the dev machine).

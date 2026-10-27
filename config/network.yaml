@@ -1,0 +1,46 @@
+# Single source of truth for SmartCar networking.
+# Update this file first when an IP, interface or device changes.
+ros_domain_id: 42
+
+dev:
+  hostname: dev-machine
+  interface: enp5s0
+  ip: 192.168.100.123
+
+vehicle:
+  hostname: yunle
+  interface: enp1s0
+  ip: 192.168.100.10
+
+gateway:
+  ip: 192.168.100.1
+  note: "OrayBox / Pgyer; DHCP/DNS/UPnP; WiFi SSID robot1 (2.4G ch8)"
+
+upstream:
+  note: "Big gateway / upstream NAT; public IPv4 not confirmed"
+
+campus_wifi:
+  subnet: 10.164.76.0/24
+  gateway: 10.164.76.155
+  dev_ip: 10.164.76.240
+  vehicle_ip: 10.164.76.64
+  note: "Independent from the 192.168.100.0/24 vehicle LAN; default route"
+
+sensors:
+  lidar_3d: 192.168.100.201
+  lidar_2d_left: 192.168.100.200
+  lidar_2d_right: 192.168.100.210
+  chassis_can_ethernet: 192.168.100.110
+
+ports:
+  lslidar_msop: 2368
+  lslidar_difop: 2369
+  lakibeam_left: 2468
+  lakibeam_right: 2568
+  chassis_can1_remote: 4001
+  chassis_can2_remote: 4002
+  chassis_local: 8002
+
+other_hosts:
+  another_linux_ipc: 192.168.100.101
+  unknown_device: 192.168.100.100

@@ -1,0 +1,22 @@
+# Vehicle IPC overrides.
+network:
+  interface: enp1s0
+  ip: 192.168.100.10
+
+vx1000:
+  device: /dev/ttyUSB0
+  stable_path: /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_B0029FI4-if00-port0
+  baud: 460800
+
+slam:
+  # TODO: choose fast_lio2 / point_lio / ndt / other.
+  type: TODO
+  use_imu: true
+  use_wheel_odom: false
+  use_gnss: false
+
+visualization:
+  enabled: false
+
+recording:
+  enabled: false

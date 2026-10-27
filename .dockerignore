@@ -1,0 +1,17 @@
+.git
+.github
+build
+install
+log
+bags
+releases
+release-manifests
+docs
+tests
+*.tar
+*.tar.gz
+*.tar.zst
+*.bag
+.env
+.vscode
+.idea

@@ -1,0 +1,27 @@
+# Development machine overrides.
+network:
+  interface: enp5s0
+  ip: 192.168.100.123
+
+sensors:
+  lidar_3d: 192.168.100.201
+  lidar_2d_left: 192.168.100.200
+  lidar_2d_right: 192.168.100.210
+  chassis_can_ethernet: 192.168.100.110
+
+ports:
+  lslidar_msop: 2368
+  lslidar_difop: 2369
+  lakibeam_left: 2468
+  lakibeam_right: 2568
+  chassis_local: 8002
+
+visualization:
+  mode: rviz
+  # Use a downsampled topic on a 100M link.
+  use_downsampled_cloud: true
+
+recording:
+  enabled: true
+  # Do not record the RealSense camera.
+  camera: false

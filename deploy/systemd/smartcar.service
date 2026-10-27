@@ -1,0 +1,16 @@
+[Unit]
+Description=SmartCar ROS 2 vehicle stack
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/smartcar/current
+ExecStart=/usr/bin/docker compose -f compose.vehicle.yaml up
+ExecStop=/usr/bin/docker compose -f compose.vehicle.yaml down
+Restart=unless-stopped
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
