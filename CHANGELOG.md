@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Replaced the Makefile with plain `scripts/*.sh` entry points.
+- Build/release commands now pass `-f docker/Dockerfile`; the Dockerfile lives
+  under `docker/`, not at the repository root.
+- Added `scripts/README.md` and `scripts/help.sh`.
+
 ## v0.1.0-skeleton - 2026-10-25
 
 - Initial SmartCar repository skeleton.

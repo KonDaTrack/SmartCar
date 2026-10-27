@@ -39,10 +39,10 @@ See [docs/sensors.md](docs/sensors.md) and [docs/network.md](docs/network.md).
 cp .env.example .env
 
 # 1. Build the development image
-make build-dev
+./scripts/build-dev.sh
 
 # 2. Open the dev container
-make dev
+./scripts/dev.sh
 # inside:
 cd /ws
 colcon build --symlink-install
@@ -52,19 +52,19 @@ source install/setup.bash
 Live sensor work: connect the dev machine's `enp5s0` to the vehicle switch, then:
 
 ```bash
-make up      # sensors + slam dev containers
-make rviz    # RViz container (X11 + RTX 5060)
-make record  # rosbag2 MCAP + zstd, written to bags/
+./scripts/up.sh      # sensors + slam dev containers
+./scripts/rviz.sh    # RViz container (X11 + RTX 5060)
+./scripts/record.sh  # rosbag2 MCAP + zstd, written to bags/
 ```
 
 ## Release / deploy
 
 ```bash
 git add . && git commit
-make release VERSION=v0.1.0     # build runtime image + image.tar.zst + manifest
-make deploy  VERSION=v0.1.0     # rsync over LAN + docker load + compose up
-make health                     # run healthcheck on the vehicle
-make rollback                   # switch to previous release
+./scripts/release.sh v0.1.0     # build runtime image + image.tar.zst + manifest
+./scripts/deploy.sh  v0.1.0     # rsync over LAN + docker load + compose up
+./scripts/health.sh             # run healthcheck on the vehicle
+./scripts/rollback.sh           # switch to previous release
 ```
 
 The vehicle only needs Docker, `rsync`, `zstd` and the Docker Compose v2 plugin. See [docs/deploy.md](docs/deploy.md).
@@ -73,6 +73,7 @@ The vehicle only needs Docker, `rsync`, `zstd` and the Docker Compose v2 plugin.
 
 ```text
 docker/          Dockerfile, entrypoint, apt package lists
+scripts/         build/dev/up/rviz/record/release/deploy shortcuts
 src/             ROS 2 packages (bringup, sensors, chassis, slam, msgs)
 config/          site configs: network, dev, vehicle, calibration, rviz
 deploy/          compose files, deploy/rollback/healthcheck, systemd

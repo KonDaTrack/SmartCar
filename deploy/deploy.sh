@@ -46,4 +46,4 @@ docker image prune -f >/dev/null || true
 EOS
 
 echo "==> deployed $VERSION"
-echo "    next: make health"
+echo "    next: ./scripts/health.sh"

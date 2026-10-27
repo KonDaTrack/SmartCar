@@ -6,7 +6,7 @@
 - [x] Network/sensor/workflow documentation
 - [x] Placeholder launch files and keepalive node
 - [ ] Initial commit and GitHub private remote
-- [ ] First `make build-dev` / `make dev` on the dev machine
+- [ ] First `./scripts/build-dev.sh` / `./scripts/dev.sh` on the dev machine
 
 ## M1 - Sensor drivers
 

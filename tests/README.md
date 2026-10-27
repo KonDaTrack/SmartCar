@@ -17,10 +17,10 @@ colcon test --merge-install
 colcon test-result --verbose
 
 # record a short bag on the dev machine
-make record
+./scripts/record.sh
 
 # replay it
-make replay BAG=20261025_120000
+./scripts/replay.sh 20261025_120000
 ```
 
 No hardware is required for CI-style unit tests. Keep hardware tests as manual

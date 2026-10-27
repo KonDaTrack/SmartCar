@@ -34,7 +34,7 @@ machine and copy them over. Docker 20.10 can load images built by Docker 29.
 
 ## Release bundle
 
-`make release VERSION=v0.1.0` produces a self-contained directory. The vehicle
+`./scripts/release.sh v0.1.0` produces a self-contained directory. The vehicle
 receives only this bundle; it never receives source or a compiler.
 
 ```text
@@ -52,7 +52,7 @@ releases/v0.1.0/
 ## Deploy
 
 ```bash
-make deploy VERSION=v0.1.0
+./scripts/deploy.sh v0.1.0
 ```
 
 This checks the vehicle for `docker`, `rsync`, `zstd` and `docker compose`, then:
@@ -69,7 +69,7 @@ services are opt-in profiles.
 ## Health
 
 ```bash
-make health
+./scripts/health.sh
 # or on the vehicle:
 cd /opt/smartcar/current && ./healthcheck.sh
 ```
@@ -80,7 +80,7 @@ Replace the TODOs with real `ros2 topic hz` checks once drivers exist.
 ## Rollback
 
 ```bash
-make rollback
+./scripts/rollback.sh
 ```
 
 This switches `current` to the previous release directory and runs

@@ -53,8 +53,8 @@ No per-driver containers. No ROS 1 bridge. No Foxglove.
 ## Daily development
 
 ```bash
-make build-dev
-make dev
+./scripts/build-dev.sh
+./scripts/dev.sh
 # inside:
 cd /ws
 colcon build --symlink-install
@@ -63,9 +63,9 @@ colcon build --symlink-install
 With the dev machine wired to the vehicle switch:
 
 ```bash
-make up          # sensors + slam dev containers
-make rviz        # RViz over DDS
-make record      # LiDAR + IMU + chassis + TF, MCAP/zstd
+./scripts/up.sh          # sensors + slam dev containers
+./scripts/rviz.sh        # RViz over DDS
+./scripts/record.sh      # LiDAR + IMU + chassis + TF, MCAP/zstd
 ```
 
 Sensors stay up while SLAM is restarted:
@@ -80,7 +80,7 @@ docker compose -f deploy/compose.dev.yaml up -d --no-deps slam
 git status                     # must be clean
 git tag -a v0.1.0 -m "vehicle v0.1.0"
 git push origin main --tags
-make release VERSION=v0.1.0
+./scripts/release.sh v0.1.0
 ```
 
 `tools/release.sh` builds the runtime image and writes:
@@ -102,9 +102,9 @@ The manifest is copied to `release-manifests/v0.1.0.yaml` and committed.
 ## Deploy and rollback
 
 ```bash
-make deploy VERSION=v0.1.0     # rsync + docker load + compose up
-make health                    # compose ps, topics, stats
-make rollback                  # switch current -> previous release
+./scripts/deploy.sh v0.1.0     # rsync + docker load + compose up
+./scripts/health.sh            # compose ps, topics, stats
+./scripts/rollback.sh          # switch current -> previous release
 ```
 
 Vehicle layout:

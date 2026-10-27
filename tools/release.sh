@@ -28,7 +28,7 @@ if [ -n "$(git status --porcelain)" ]; then
 fi
 
 echo "==> building $IMAGE:$VERSION"
-docker build --target runtime -t "$IMAGE:$VERSION" "$ROOT"
+docker build -f "$ROOT/docker/Dockerfile" --target runtime -t "$IMAGE:$VERSION" "$ROOT"
 
 rm -rf "$OUT"
 mkdir -p "$OUT"
@@ -74,4 +74,4 @@ cp "$OUT/manifest.yaml" "$ROOT/release-manifests/$VERSION.yaml"
 
 echo "==> release ready: $OUT"
 echo "    commit release-manifests/$VERSION.yaml"
-echo "    deploy: make deploy VERSION=$VERSION"
+echo "    deploy: ./scripts/deploy.sh $VERSION"
