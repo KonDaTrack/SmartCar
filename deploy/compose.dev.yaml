@@ -57,6 +57,9 @@ services:
     network_mode: host
     ipc: host
     runtime: nvidia
+    group_add:
+      - video
+      - render
     environment:
       <<: *common-env
       DISPLAY: ${DISPLAY:-:1}

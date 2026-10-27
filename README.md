@@ -19,6 +19,9 @@ ROS 2 Humble + Docker workspace for the SmartCar vehicle.
   - `record` — headless `ros2 bag record` to the dev machine.
   - `replay` is a one-off container.
 - **No ROS 1 bridge, no Foxglove, no camera recording.**
+- **Non-root containers:** images create a `smartcar` user (UID/GID 1000); dev
+  build artifacts stay owned by the host user, and VX1000 serial access uses
+  `dialout`.
 
 ## Sensors (current inventory)
 
@@ -95,6 +98,7 @@ release-manifests/  small release manifests committed to Git
 7. One sensor stack at a time: ROS 1 drivers must not run alongside ROS 2 drivers.
 8. RViz runs on the dev machine; the vehicle runs no GUI.
 9. 100M LAN: visualize a downsampled cloud; avoid full-resolution visualization + full-resolution bag recording at the same time.
+10. Containers run as non-root `smartcar` (UID 1000); do not run the stack as root inside the container.
 
 ## Not implemented yet
 

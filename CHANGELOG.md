@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Run containers as a non-root `smartcar` user (UID/GID 1000) instead of root.
+  The ROS base images have no `ubuntu` user; the user is created in the image.
+- Added `dialout`/`video`/`render` group handling for the VX1000 serial device
+  and RViz GPU access.
+- Fixed `smartcar_msgs/package.xml` to use `rosidl_interface_packages`, so
+  message generation builds in the runtime image.
 - Replaced the Makefile with plain `scripts/*.sh` entry points.
 - Build/release commands now pass `-f docker/Dockerfile`; the Dockerfile lives
   under `docker/`, not at the repository root.

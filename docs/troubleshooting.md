@@ -1,5 +1,19 @@
 # Troubleshooting
 
+## Container user and permissions
+
+- The images create a non-root `smartcar` user (UID/GID 1000). There is **no
+  `ubuntu` user** in the ROS base images.
+- Dev containers write `build/`, `install/` and `log/` as UID 1000 on the host
+  bind mount, so your host user should also be UID 1000. If older artifacts are
+  root-owned, fix them once with `sudo chown -R "$(id -u):$(id -g)" build install log`.
+- VX1000 serial: `/dev/ttyUSB0` is usually `root:dialout`; the vehicle compose
+  adds the `dialout` group. Verify with `getent group dialout`.
+- RViz X11: `./scripts/rviz.sh` grants the current host user access via
+  `xhost +si:localuser:$(id -un)`. If you run as a different user, adjust.
+- RViz GPU: the service adds `video`/`render`; if GLX still fails, try
+  `--device /dev/dri` or `LIBGL_ALWAYS_SOFTWARE=1`.
+
 ## DDS: machines cannot see each other
 
 - Both sides use the same `ROS_DOMAIN_ID` and `RMW_IMPLEMENTATION`.

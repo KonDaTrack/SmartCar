@@ -32,6 +32,13 @@ docker compose version
 If the vehicle is offline, download the plugin and apt packages on the dev
 machine and copy them over. Docker 20.10 can load images built by Docker 29.
 
+## Runtime user and devices
+
+Containers run as the non-root `smartcar` user (UID/GID 1000). The vehicle host
+user `yunle` is also UID 1000, so mounted config files are readable without
+root. The VX1000 serial device is passed through with `group_add: dialout`; if
+the device is not readable, check `getent group dialout` and `ls -l /dev/ttyUSB0`.
+
 ## Release bundle
 
 `./scripts/release.sh v0.1.0` produces a self-contained directory. The vehicle

@@ -5,5 +5,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
 . "${SCRIPT_DIR}/common.sh"
 
+HOST_USER="$(id -un)"
 "${COMPOSE_DEV[@]}" --profile viz rm -sf rviz
-xhost -si:localuser:root >/dev/null 2>&1 || true
+xhost -si:localuser:"${HOST_USER}" >/dev/null 2>&1 || true

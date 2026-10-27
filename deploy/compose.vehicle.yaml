@@ -19,6 +19,8 @@ services:
     environment: *common-env
     devices:
       - ${VX1000_DEVICE:-/dev/ttyUSB0}:/dev/ttyUSB0
+    group_add:
+      - dialout
     volumes:
       - ${SMARTCAR_CONFIG_HOST_DIR:-../config}:/config:ro
     command: ros2 launch smartcar_bringup sensors.launch.py
@@ -56,6 +58,8 @@ services:
     environment: *common-env
     devices:
       - ${VX1000_DEVICE:-/dev/ttyUSB0}:/dev/ttyUSB0
+    group_add:
+      - dialout
     volumes:
       - ${SMARTCAR_CONFIG_HOST_DIR:-../config}:/config:ro
     command: ros2 launch smartcar_bringup vehicle.launch.py
