@@ -25,3 +25,4 @@ config/calibration/*.ply
 .idea/
 *.swp
 .DS_Store
+src/vendor/
