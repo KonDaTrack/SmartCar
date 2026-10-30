@@ -23,7 +23,7 @@ launch (`autox_startup.sh` -> `autox_yuhuo_1.launch`):
 
 ```text
 base_link -> rslidar    x=0.96  y=0  z=1.4  rpy=0
-base_link -> imu_link   x=0     y=0  z=0.2  rpy=0
+base_link -> imu_link   x=0     y=0  z=0.2  roll=pi, pitch=0, yaw=0
 base_link -> gps        x=0     y=0  z=0.2  rpy=0
 ```
 
@@ -37,9 +37,22 @@ ros2 run tf2_ros tf2_echo base_link imu_link
 ros2 topic echo /tf_static --once
 ```
 
-The VX1000 reports `acc_z ~= -9.79` at rest. Check the axis/sign with the
-calibration bag before changing the rotation; do not hide an extrinsic error
-with a time offset.
+The VX1000 reports `acc_z ~= -9.79` at rest, and forward acceleration appears
+on +x. Its frame is x-forward / z-down, so `imu_link` is rotated 180 deg about
+x relative to `base_link`. This keeps `base_link` in ROS REP-103
+(x-forward, y-left, z-up). Do not hide an extrinsic error with a time offset.
+
+## Preliminary calibration result (20261030_065908)
+
+- IMU static: gyro bias ~1e-4 rad/s, `|acc| = 9.806 m/s2`.
+- Wheel speed vs IMU acc_x: `wheel` timestamps are ~65 ms later; use
+  `wheel_to_imu_offset_ms = -65`.
+- Steering scale: integrated IMU yaw / wheel-model yaw = **0.914**; provisional
+  because wheelbase and steering dynamics are coupled.
+- Steering feedback is much smoother than wheel speed, so the raw yaw
+  cross-correlation peak is broad (460–710 ms); it is not a reliable pure
+  timestamp offset.
+- LiDAR-IMU time offset is still pending a LiDAR-inertial calibration/front-end.
 
 ## 1. Reduce FTDI batching
 
@@ -119,8 +132,16 @@ Copy the bag to the dev machine. In the dev container:
 python3 /ws/tools/estimate_offsets.py /bags/<bag> --wheel-base 1.2
 ```
 
-The tool reconstructs chassis yaw rate from speed + steering and finds the lag
-that best correlates it with gyro Z. It reports:
+For a smoother steering bag the raw yaw peak is broad; `analyze_calibration.py`
+also checks the sharper acceleration events (speed derivative vs IMU acc_x)
+and fits the steer scale:
+
+```bash
+python3 /ws/tools/analyze_calibration.py /bags/<bag> --wheel-base 1.2
+```
+
+The simpler estimator reconstructs chassis yaw rate from speed + steering and
+finds the lag that best correlates it with gyro Z. It reports:
 
 ```text
 best wheel-IMU lag: +X ms (correlation 0.xx)

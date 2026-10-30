@@ -18,7 +18,9 @@ base_link_to_imu_link:
   x: 0.0
   y: 0.0
   z: 0.2
-  roll: 0.0
+  # VX1000 is x-forward / z-down (rest acc_z ~= -9.8). 180 deg roll maps it
+  # to the ROS REP-103 base frame (x-forward, y-left, z-up).
+  roll: 3.141592653589793
   pitch: 0.0
   yaw: 0.0
 
@@ -30,18 +32,20 @@ base_link_to_gps:
   pitch: 0.0
   yaw: 0.0
 
-# Derived: position of the LiDAR origin expressed in imu_link, rotations zero.
-# T_imu_lidar translation = p_lidar - p_imu = (0.96, 0, 1.2).
+# Derived: LiDAR origin expressed in imu_link. The IMU frame is rotated
+# 180 deg about x relative to base_link, so the base-frame offset
+# (0.96, 0, 1.2) becomes (0.96, 0, -1.2) in imu_link.
 lidar_in_imu_link:
   x: 0.96
   y: 0.0
-  z: 1.2
-  roll: 0.0
+  z: -1.2
+  roll: 3.141592653589793
   pitch: 0.0
   yaw: 0.0
 
 notes: >
-  The legacy launch sets imu_upside_down=false. The VX1000 reports
-  acc_z ~= -9.79 at rest; verify the IMU axis/sign with the calibration bag
-  before changing the rotation. Do not compensate a wrong extrinsic with a
-  time offset.
+  Translation comes from the active ROS 1 yuhuo launch. The 180 deg roll was
+  determined from the calibration bag: x is forward (acc_x correlates with
+  speed derivative) and z is down (rest acc_z ~= -9.8, right turn gyro z
+  positive). Verify in LIO; do not compensate a wrong extrinsic with a time
+  offset.

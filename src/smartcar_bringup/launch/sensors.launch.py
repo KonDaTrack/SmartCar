@@ -1,3 +1,4 @@
+import math
 import os
 
 from launch import LaunchDescription
@@ -77,7 +78,11 @@ def generate_launch_description():
         #   docs/autox_startup.sh -> automotive_launch/autox_yuhuo_1.launch
         # Keep in sync with config/calibration/lidar_imu_extrinsics.yaml.
         _static_tf('base_to_rslidar', 'base_link', 'rslidar', 0.96, 0.0, 1.4),
-        _static_tf('base_to_imu_link', 'base_link', 'imu_link', 0.0, 0.0, 0.2),
+        # VX1000 reports x-forward / z-down (rest acc_z ~= -9.8). Rotate the
+        # IMU frame by 180 deg about x so base_link remains ROS REP-103
+        # (x-forward, y-left, z-up).
+        _static_tf('base_to_imu_link', 'base_link', 'imu_link',
+                   0.0, 0.0, 0.2, roll=math.pi),
         _static_tf('base_to_gps', 'base_link', 'gps', 0.0, 0.0, 0.2),
 
         # VX1000 integrated navigation unit on /dev/ttyUSB0. Off by default so

@@ -15,9 +15,18 @@
 #
 # After changing these, record the bag name, date and LIO version in the
 # release manifest.
-updated: ""
-source_bag: ""
+updated: "2026-10-30"
+source_bag: "20261030_065908"
 wheel_base: 1.2
-wheel_to_imu_offset_ms: 0.0
+# Acceleration events (speed derivative vs IMU acc_x, corr 0.774):
+# wheel timestamps are 65 ms later, so apply -65 ms to align with the IMU.
+# The raw yaw cross-correlation was broad (+460..+710 ms) because the
+# steering command is smooth; do not use it as the timestamp offset.
+wheel_to_imu_offset_ms: -65.0
+# Pending: requires a LiDAR-inertial calibration/front-end; this bag alone
+# cannot separate LiDAR-IMU time offset from extrinsic error.
 lidar_to_imu_offset_ms: 0.0
-notes: "Software sync only; no PPS/PTP. Host timestamps for all three drivers."
+notes: >
+  Software sync only; no PPS/PTP. Static extrinsics from autox_yuhuo_1.launch
+  with a 180 deg roll on imu_link (VX1000 z-down). Steer scale 0.914 is
+  provisional (integrated yaw ratio); validate with a sharper run.

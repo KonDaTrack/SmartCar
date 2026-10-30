@@ -153,9 +153,12 @@ def estimate(wheel_t, wheel_yaw, imu_t, imu_yaw_rate, wheel_base, rate, max_lag_
         print('WARNING: best lag is at the search boundary; increase --max-lag-ms')
 
     print()
+    print('For smooth steering runs the yaw peak can be broad. Use')
+    print('  tools/analyze_calibration.py')
+    print('for the acceleration-based lag, steer scale and IMU static check.')
     print('Lidar-IMU offset is a separate calibration:')
-    print('  run the offline LIO front-end and sweep time_offset_lidar_to_imu')
-    print('  with this bag, then store the best value in config/calibration/time_sync.yaml')
+    print('  run a LiDAR-inertial calibration/front-end (LI-Init, OA-LICalib or')
+    print('  a temporary LIO) and store the result in time_offsets.yaml')
     return offset_ms, best_corr
 
 
