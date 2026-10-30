@@ -112,7 +112,16 @@ fi
 ros2 bag record "${BAG_ARGS[@]}" "${TOPICS[@]}" &
 BAG_PID=$!
 
-trap 'kill -INT "$BAG_PID" 2>/dev/null || true' INT TERM
+FINALIZING=0
+stop_bag() {
+  if [ "$FINALIZING" = "1" ]; then
+    return
+  fi
+  FINALIZING=1
+  echo "Recorder stopping; finalizing bag. Do not stop the container until BAG READY."
+  kill -INT "$BAG_PID" 2>/dev/null || true
+}
+trap stop_bag INT TERM
 
 if [ "$RECORD_SECONDS" -gt 0 ]; then
   ( sleep "$RECORD_SECONDS"; kill -INT "$BAG_PID" 2>/dev/null || true ) &
@@ -120,4 +129,21 @@ if [ "$RECORD_SECONDS" -gt 0 ]; then
 fi
 
 wait "$BAG_PID" || true
-echo "Bag finished: $OUT"
+FINALIZING=1
+echo "Finalizing $OUT ..."
+
+# File compression runs at shutdown and can be interrupted by a short docker
+# stop timeout. If metadata was not written, reconstruct it from the MCAP file
+# before declaring the bag ready.
+if [ ! -f "$OUT/metadata.yaml" ]; then
+  echo "metadata.yaml missing; reindexing MCAP"
+  ros2 bag reindex -s mcap "$OUT" || true
+fi
+
+if [ -f "$OUT/metadata.yaml" ] && ros2 bag info "$OUT"; then
+  touch "${OUT}.ready"
+  echo "BAG READY: $OUT"
+else
+  echo "ERROR: bag finalization failed; raw data may remain in $OUT" >&2
+  exit 1
+fi
