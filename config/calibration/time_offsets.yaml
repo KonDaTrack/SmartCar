@@ -1,0 +1,23 @@
+# Soft-sync calibration for LIO (C16 + VX1000 IMU + chassis odometry).
+#
+# These are starting values, not a substitute for hardware time sync.
+# Fill them from a motion calibration bag:
+#   python3 tools/estimate_offsets.py /bags/<bag> --wheel-base 1.2
+#
+# wheel_to_imu_offset_ms:
+#   Positive = add this many ms to wheel/vehicle_status timestamps so they
+#   line up with the IMU (convention used by tools/estimate_offsets.py).
+#
+# lidar_to_imu_offset_ms:
+#   Candidate for the LIO front-end's time_offset_lidar_to_imu. The sign
+#   convention depends on the LIO implementation; verify with a straight
+#   line and a rotation before committing.
+#
+# After changing these, record the bag name, date and LIO version in the
+# release manifest.
+updated: ""
+source_bag: ""
+wheel_base: 1.2
+wheel_to_imu_offset_ms: 0.0
+lidar_to_imu_offset_ms: 0.0
+notes: "Software sync only; no PPS/PTP. Host timestamps for all three drivers."

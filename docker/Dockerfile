@@ -77,7 +77,8 @@ SHELL ["/bin/bash", "-lc"]
 
 COPY --from=builder /ws/install /ws/install
 COPY docker/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+COPY tools/record.sh tools/sync_monitor.py /usr/local/bin/
+RUN chmod +x /entrypoint.sh /usr/local/bin/record.sh /usr/local/bin/sync_monitor.py
 
 ENV ROS_DISTRO=${ROS_DISTRO}
 ENV HOME=/home/smartcar

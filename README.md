@@ -115,6 +115,10 @@ release-manifests/  small release manifests committed to Git
 - Site parameters live in `config/chassis.yaml`. The axle geometry and the
   `steer_scale` / `steer_angle_scale` heading calibration must be checked on
   the real vehicle.
+- LIO recording is done on the vehicle (`record` compose profile), not over the
+  dev LAN. Default topics: C16, VX1000 IMU, chassis status/odometry and TF.
+  A time-offset monitor runs alongside the recorder; see
+  [docs/time_sync.md](docs/time_sync.md).
 - Offline regression (synthetic serial + UDP frames):
 
   ```bash

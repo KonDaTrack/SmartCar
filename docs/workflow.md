@@ -7,8 +7,9 @@
 - Source is mounted in the dev container and baked into the runtime image.
 - Site configuration is mounted, never baked into the image.
 - GitHub backs up source; images travel over the LAN.
-- Production SLAM runs on the vehicle. The dev machine records bags, replays
-  them, visualizes with RViz, and builds images.
+- Production SLAM/localization runs on the vehicle. The vehicle records bags
+  locally; the dev machine replays them, builds maps, visualizes with RViz,
+  and builds images.
 
 ## GitHub
 
@@ -43,6 +44,7 @@ vehicle containers and for runtime validation on the dev machine.
 | Vehicle | `slam` | SLAM / localization / map |
 | Vehicle | `chassis` (optional) | Split out when the chassis node is stable |
 | Vehicle | `vehicle` (optional profile) | Combined debug fallback |
+| Vehicle | `record` (profile) | MCAP/zstd recorder + time-offset monitor |
 | Dev | `dev` | Interactive build/shell |
 | Dev | `rviz` | X11 + NVIDIA GPU visualization |
 | Dev | `record` | Headless rosbag2 record |
@@ -73,6 +75,15 @@ Sensors stay up while SLAM is restarted:
 ```bash
 docker compose -f deploy/compose.dev.yaml up -d --no-deps slam
 ```
+
+Record on the vehicle (the 100M LAN is not used for live recording):
+
+```bash
+docker compose -f deploy/compose.vehicle.yaml up -d sensors chassis
+docker compose -f deploy/compose.vehicle.yaml --profile record run --rm record
+```
+
+See [time_sync.md](time_sync.md) for the calibration and offset workflow.
 
 ## Release
 

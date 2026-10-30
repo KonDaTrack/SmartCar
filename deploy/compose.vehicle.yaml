@@ -55,6 +55,23 @@ services:
     profiles: [chassis]
     logging: *default-logging
 
+  record:
+    image: ${IMAGE:-smartcar-ros2}:${IMAGE_TAG:-dev}
+    network_mode: host
+    ipc: host
+    environment:
+      <<: *common-env
+      BAGS_DIR: /bags
+      MIN_FREE_GB: ${MIN_FREE_GB:-20}
+      MAX_BAG_SIZE_GB: ${MAX_BAG_SIZE_GB:-20}
+      START_SYNC_MONITOR: ${START_SYNC_MONITOR:-1}
+    volumes:
+      - ${SMARTCAR_BAGS_HOST_DIR:-/home/yunle/bags}:/bags
+    command: /usr/local/bin/record.sh
+    profiles: [record]
+    restart: "no"
+    logging: *default-logging
+
   vehicle:
     image: ${IMAGE:-smartcar-ros2}:${IMAGE_TAG:-dev}
     network_mode: host
