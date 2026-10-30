@@ -11,3 +11,4 @@ shellcheck
 yamllint
 python3-pytest
 ros-humble-rviz2
+libpcap-dev

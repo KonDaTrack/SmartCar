@@ -165,7 +165,7 @@ class Collector(Node):
         self.create_subscription(Imu, '/imu/data', self._set('std_imu'), 10)
         self.create_subscription(NavSatFix, '/gnss/fix', self._set('std_fix'), 10)
         self.create_subscription(VehicleStatus, '/vehicle_status', self._set('status'), 10)
-        self.create_subscription(Odometry, '/odom', self._set('odo'), 10)
+        self.create_subscription(Odometry, '/chassis/odom', self._set('odo'), 10)
 
     def _set(self, name):
         def cb(msg):
@@ -373,7 +373,7 @@ def test_chassis(failures):
         check(node.status.gear == 1, 'chassis gear D', failures)
         check(close(node.status.total_odometer, 12345), 'chassis odometer', failures)
 
-    check(node.odo is not None, 'chassis /odom received', failures)
+    check(node.odo is not None, 'chassis /chassis/odom received', failures)
     if node.odo:
         expected = math.tan(-math.radians(10.51)) * 1.5 / 1.2
         check(close(node.odo.twist.twist.angular.z, expected, 1e-2),

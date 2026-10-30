@@ -28,7 +28,10 @@ can_odometry_node:
     # Heading calibration: 1.0 matches the ROS 1 can_odometry behavior.
     # Negative flips the steering sign; adjust magnitude if heading drifts.
     steer_angle_scale: 1.0
-    odom_frame: odom
-    base_frame: base_footprint
-    publish_tf: true
+    # Keep chassis odometry separate from the SLAM front-end's /odom and
+    # odom -> base_link TF. Enable publish_tf only when SLAM is not running.
+    odom_topic: chassis/odom
+    odom_frame: chassis_odom
+    base_frame: base_link
+    publish_tf: false
     max_dt: 0.5

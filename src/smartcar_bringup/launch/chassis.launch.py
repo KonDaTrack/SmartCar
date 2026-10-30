@@ -38,7 +38,8 @@ def generate_launch_description():
             parameters=[chassis_params],
         ),
 
-        # /vehicle_status -> /odom + TF odom -> base_footprint.
+        # /vehicle_status -> /chassis/odom. TF is off by default; the SLAM
+        # front-end owns /odom and odom -> base_link.
         Node(
             package='smartcar_chassis',
             executable='can_odometry_node',

@@ -54,7 +54,7 @@ else
     /imu/data
     /VX1000_imu
     /vehicle_status
-    /odom
+    /chassis/odom
     /tf
     /tf_static
   )

@@ -13,6 +13,9 @@ topics:
   imu: /VX1000_imu
   gnss: /VX1000_gnss
   vehicle_status: /vehicle_status
+  # Chassis Ackermann odometry (kept separate from the SLAM front-end).
+  chassis_odom: /chassis/odom
+  # SLAM front-end odometry/TF authority.
   odom: /odom
   map: /map
 

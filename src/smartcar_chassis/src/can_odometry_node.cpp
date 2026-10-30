@@ -61,16 +61,19 @@ public:
     wheel_base_ = declare_parameter<double>("wheel_base", 1.2);
     is_akm_ = declare_parameter<bool>("is_akm", true);
     steer_angle_scale_ = declare_parameter<double>("steer_angle_scale", 1.0);
-    odom_frame_ = declare_parameter<std::string>("odom_frame", "odom");
-    base_frame_ = declare_parameter<std::string>("base_frame", "base_footprint");
-    publish_tf_ = declare_parameter<bool>("publish_tf", true);
+    odom_topic_ = declare_parameter<std::string>("odom_topic", "chassis/odom");
+    odom_frame_ = declare_parameter<std::string>("odom_frame", "chassis_odom");
+    base_frame_ = declare_parameter<std::string>("base_frame", "base_link");
+    // The SLAM front-end owns odom -> base_link. Chassis odometry is a data
+    // source; enable its TF only when no SLAM front-end is running.
+    publish_tf_ = declare_parameter<bool>("publish_tf", false);
     max_dt_ = declare_parameter<double>("max_dt", 0.5);
 
     if (wheel_base_ <= 0.0) {
       throw std::runtime_error("wheel_base must be > 0");
     }
 
-    odom_pub_ = create_publisher<nav_msgs::msg::Odometry>("odom", rclcpp::QoS(10));
+    odom_pub_ = create_publisher<nav_msgs::msg::Odometry>(odom_topic_, rclcpp::QoS(10));
     if (publish_tf_) {
       tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
     }
@@ -81,8 +84,10 @@ public:
 
     RCLCPP_INFO(
       get_logger(),
-      "odometry: wheel_base=%.3f is_akm=%d steer_angle_scale=%.3f frames=%s->%s",
-      wheel_base_, is_akm_, steer_angle_scale_, odom_frame_.c_str(), base_frame_.c_str());
+      "chassis odometry: topic=%s wheel_base=%.3f is_akm=%d "
+      "steer_angle_scale=%.3f frames=%s->%s publish_tf=%d",
+      odom_topic_.c_str(), wheel_base_, is_akm_, steer_angle_scale_,
+      odom_frame_.c_str(), base_frame_.c_str(), publish_tf_);
   }
 
 private:
@@ -171,9 +176,10 @@ private:
   double wheel_base_{1.2};
   bool is_akm_{true};
   double steer_angle_scale_{1.0};
-  std::string odom_frame_{"odom"};
-  std::string base_frame_{"base_footprint"};
-  bool publish_tf_{true};
+  std::string odom_topic_{"chassis/odom"};
+  std::string odom_frame_{"chassis_odom"};
+  std::string base_frame_{"base_link"};
+  bool publish_tf_{false};
   double max_dt_{0.5};
 
   double x_{0.0};

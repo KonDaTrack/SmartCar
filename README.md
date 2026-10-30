@@ -110,8 +110,9 @@ release-manifests/  small release manifests committed to Git
   `/VX1000_ins|imu|gnss|stat|cov|odom` plus standard `/imu/data` and
   `/gnss/fix`.
 - `smartcar_chassis` — receives the `.110` CAN-over-UDP stream on port 8002,
-  publishes `/vehicle_status`, and integrates it into `/odom` + TF
-  `odom -> base_footprint` (JD01 Ackermann, `wheel_base=1.2`).
+  publishes `/vehicle_status`, and integrates it into `/chassis/odom`
+  (JD01 Ackermann, `wheel_base=1.2`). Its TF is off by default because the
+  SLAM front-end owns `/odom` and `odom -> base_link`.
 - Site parameters live in `config/chassis.yaml`. The axle geometry and the
   `steer_scale` / `steer_angle_scale` heading calibration must be checked on
   the real vehicle.

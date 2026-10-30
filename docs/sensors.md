@@ -10,7 +10,7 @@ last ROS run logs.
 | 2D LiDAR left | RichBeam LakiBeam1 | Ethernet, UDP 2468 | `192.168.100.200` | `/scan_left` (TF `laser_left`) |
 | 2D LiDAR right | RichBeam LakiBeam1 | Ethernet, UDP 2568 | `192.168.100.210` | `/scan_right` (TF `laser_right`) |
 | GNSS/RTK + IMU | VX1000 | USB serial, 460800 | `/dev/ttyUSB0` (`/dev/gps`) | `/VX1000_ins`, `/VX1000_imu`, `/VX1000_gnss`, `/VX1000_stat`, `/VX1000_cov`, `/VX1000_odom`, `/imu/data`, `/gnss/fix` |
-| Chassis | CAN-to-Ethernet gateway | Ethernet, UDP 4001/4002 → `.10:8002` | `192.168.100.110` | `/vehicle_status`, `/odom`, TF `odom -> base_footprint` |
+| Chassis | CAN-to-Ethernet gateway | Ethernet, UDP 4001/4002 → `.10:8002` | `192.168.100.110` | `/vehicle_status`, `/chassis/odom` |
 | Camera | Intel RealSense D435i | USB 3 | `8086:0b3a`, serial `947522072480` | **Not used, not recorded** |
 
 ## Mounting / TF (from the legacy launch)
@@ -25,8 +25,9 @@ last ROS run logs.
 - The VX1000 is an integrated GNSS/RTK + IMU unit; the IMU data used by SLAM
   comes from it. The RealSense built-in IMU is disabled in the legacy launch.
 - The chassis provides speed, steering and `total_odometer`. `smartcar_chassis`
-  integrates `/vehicle_status` into `/odom` and TF `odom -> base_footprint`
-  using the Ackermann model (`wheel_base=1.2`, `is_akm=true`).
+  integrates `/vehicle_status` into `/chassis/odom` using the Ackermann model
+  (`wheel_base=1.2`, `is_akm=true`). Its `chassis_odom -> base_link` TF is off
+  by default; the SLAM front-end owns `odom -> base_link`.
 - JD01 does not report usable wheel radii in the legacy driver, so
   `left_wheel_speed` / `right_wheel_speed` are zero unless `wheel_radius` is
   set in `config/chassis.yaml`; Ackermann odometry uses speed + steering.

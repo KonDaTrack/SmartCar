@@ -13,6 +13,9 @@ releases/
 *.bag
 .env
 
+# Third-party drivers fetched by deps.repos (pinned in deps.repos)
+src/vendor/
+
 # Bags and large calibration data
 bags/*
 !bags/.gitkeep

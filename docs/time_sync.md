@@ -10,11 +10,36 @@ odometry**. The 2D LiDARs and the RealSense camera are not recorded.
 | `/lslidar_point_cloud` | host `now()` at packet receive; cloud header = sweep end | `use_time_service: false`; per-point `time` field is present (`pcl_type: false`) |
 | `/imu/data` | host `now()` after serial parse | VX1000 over FTDI at 460800 |
 | `/vehicle_status` | host `now()` on UDP receive | `.110` gateway, 100 Hz |
-| `/odom` | copies `/vehicle_status` stamp | Ackermann integration |
+| `/chassis/odom` | copies `/vehicle_status` stamp | Ackermann integration; separate from SLAM `/odom` |
 
 All three share the **host clock**, so there is no relative clock drift between
 them. What remains is transport/processing latency and jitter. This is what the
 soft-sync tools measure; it is not a replacement for PPS/PTP.
+
+## Static TF / extrinsics
+
+`sensors.launch.py` publishes the initial extrinsics taken from the active ROS 1
+launch (`autox_startup.sh` -> `autox_yuhuo_1.launch`):
+
+```text
+base_link -> rslidar    x=0.96  y=0  z=1.4  rpy=0
+base_link -> imu_link   x=0     y=0  z=0.2  rpy=0
+base_link -> gps        x=0     y=0  z=0.2  rpy=0
+```
+
+The values are recorded in
+[`config/calibration/lidar_imu_extrinsics.yaml`](../config/calibration/lidar_imu_extrinsics.yaml).
+Verify before recording:
+
+```bash
+ros2 run tf2_ros tf2_echo base_link rslidar
+ros2 run tf2_ros tf2_echo base_link imu_link
+ros2 topic echo /tf_static --once
+```
+
+The VX1000 reports `acc_z ~= -9.79` at rest. Check the axis/sign with the
+calibration bag before changing the rotation; do not hide an extrinsic error
+with a time offset.
 
 ## 1. Reduce FTDI batching
 
@@ -63,7 +88,7 @@ Default topics:
 /imu/data
 /VX1000_imu
 /vehicle_status
-/odom
+/chassis/odom
 /tf
 /tf_static
 ```

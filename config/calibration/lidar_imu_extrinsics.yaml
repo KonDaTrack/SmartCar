@@ -1,0 +1,47 @@
+# Initial extrinsics ported from the active ROS 1 launch on the yuhuo vehicle.
+# Source:
+#   docs/autox_startup.sh
+#     -> automotive_launch/launch/autox_yuhuo_1.launch
+# These values are published by smartcar_bringup/sensors.launch.py and must be
+# kept in sync with the static_transform_publisher entries there.
+#
+# base_link is the legacy vehicle frame; rslidar and imu_link are its children.
+base_link_to_rslidar:
+  x: 0.96
+  y: 0.0
+  z: 1.4
+  roll: 0.0
+  pitch: 0.0
+  yaw: 0.0
+
+base_link_to_imu_link:
+  x: 0.0
+  y: 0.0
+  z: 0.2
+  roll: 0.0
+  pitch: 0.0
+  yaw: 0.0
+
+base_link_to_gps:
+  x: 0.0
+  y: 0.0
+  z: 0.2
+  roll: 0.0
+  pitch: 0.0
+  yaw: 0.0
+
+# Derived: position of the LiDAR origin expressed in imu_link, rotations zero.
+# T_imu_lidar translation = p_lidar - p_imu = (0.96, 0, 1.2).
+lidar_in_imu_link:
+  x: 0.96
+  y: 0.0
+  z: 1.2
+  roll: 0.0
+  pitch: 0.0
+  yaw: 0.0
+
+notes: >
+  The legacy launch sets imu_upside_down=false. The VX1000 reports
+  acc_z ~= -9.79 at rest; verify the IMU axis/sign with the calibration bag
+  before changing the rotation. Do not compensate a wrong extrinsic with a
+  time offset.

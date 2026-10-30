@@ -29,12 +29,12 @@ def generate_launch_description():
             description='Frame id for the raw VX1000 topics',
         ),
         DeclareLaunchArgument(
-            'imu_frame_id', default_value='vx1000_imu',
-            description='Frame id for /imu/data',
+            'imu_frame_id', default_value='imu_link',
+            description='Frame id for /imu/data (legacy base_link child)',
         ),
         DeclareLaunchArgument(
-            'gnss_frame_id', default_value='vx1000_gnss',
-            description='Frame id for /gnss/fix',
+            'gnss_frame_id', default_value='gps',
+            description='Frame id for /gnss/fix (legacy base_link child)',
         ),
         Node(
             package='smartcar_ins',
