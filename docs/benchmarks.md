@@ -64,6 +64,13 @@ Notes:
 GLIM vs KISS-SLAM in 2-D, after interpolating onto the same time grid:
 mean 4.91 m, median 1.59 m, p95 15.5 m, final 14.9 m.
 
+![Start-normalized top view](benchmarks_trajectories.png)
+
+The blue (GLIM) and orange (KISS-SLAM) paths overlap for most of the lap.
+The green Kinematic-ICP path and the red chassis odometry path both depart
+from the LiDAR-only tracks; the chassis odometry is not a usable reference
+for this recording.
+
 ### What the numbers mean
 
 - **KISS-SLAM** is the best self-consistent run on this bag: its 2-D path is
