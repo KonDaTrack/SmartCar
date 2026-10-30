@@ -31,10 +31,9 @@ apt-get install -y --no-install-recommends \
 # ---------------------------------------------------------------------------
 # GLIM (CPU build) from the koide3 apt repository.
 # ---------------------------------------------------------------------------
-REPO_HOST="$(printf 'git%s' 'hub')"
-curl -fsSL --compressed "https://koide3.${REPO_HOST}.io/ppa/ubuntu2204/KEY.gpg" \
+curl -fsSL --compressed "https://koide3.github.io/ppa/ubuntu2204/KEY.gpg" \
   | gpg --dearmor > /etc/apt/trusted.gpg.d/koide3_ppa.gpg
-echo "deb [signed-by=/etc/apt/trusted.gpg.d/koide3_ppa.gpg] https://koide3.${REPO_HOST}.io/ppa/ubuntu2204 ./" \
+echo "deb [signed-by=/etc/apt/trusted.gpg.d/koide3_ppa.gpg] https://koide3.github.io/ppa/ubuntu2204 ./" \
   > /etc/apt/sources.list.d/koide3_ppa.list
 apt-get update -qq
 apt-get install -y --no-install-recommends \
