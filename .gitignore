@@ -23,6 +23,10 @@ config/calibration/*.bag
 config/calibration/*.pcd
 config/calibration/*.ply
 
+# Offline SLAM benchmark outputs
+slam_output/
+kiss_slam.yaml
+
 # Editors / OS
 .vscode/
 .idea/

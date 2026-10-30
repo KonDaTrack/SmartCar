@@ -132,7 +132,8 @@ release-manifests/  small release manifests committed to Git
 - INS navigation initialization / RTK configuration; `ins_lat/lon` stay zero
   while `navi_tick=1`.
 - Chassis steering calibration for the small vehicle (legacy `/31.48` divisor).
-- SLAM launch and parameters.
+- SLAM launch and parameters. The offline GLIM / KISS-SLAM / Kinematic-ICP
+  comparison is in [docs/benchmarks.md](docs/benchmarks.md).
 - Calibration files and RViz configuration.
 - Real health checks (topic rate, TF, SLAM output).
 
