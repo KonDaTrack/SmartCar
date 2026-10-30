@@ -23,10 +23,15 @@ wheel_base: 1.2
 # The raw yaw cross-correlation was broad (+460..+710 ms) because the
 # steering command is smooth; do not use it as the timestamp offset.
 wheel_to_imu_offset_ms: -65.0
-# Pending: requires a LiDAR-inertial calibration/front-end; this bag alone
-# cannot separate LiDAR-IMU time offset from extrinsic error.
-lidar_to_imu_offset_ms: 0.0
+# From C16 scan-to-scan azimuth-profile matching (2290 pairs, median
+# confidence 0.966): raw -40 ms, detrended and derivative -50 ms.
+# Positive convention: add to LiDAR timestamps to align with IMU.
+lidar_to_imu_offset_ms: -50.0
 notes: >
   Software sync only; no PPS/PTP. Static extrinsics from autox_yuhuo_1.launch
   with a 180 deg roll on imu_link (VX1000 z-down). Steer scale 0.914 is
   provisional (integrated yaw ratio); validate with a sharper run.
+  The LiDAR-IMU time offset comes from tools/estimate_lidar_imu_offset.py,
+  not from a full extrinsic optimizer; translation/rotation are the initial
+  legacy values and may need refinement with LI-Init/OA-LICalib if LIO shows
+  a systematic tilt.

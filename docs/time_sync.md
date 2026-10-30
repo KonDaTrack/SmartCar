@@ -52,7 +52,27 @@ x relative to `base_link`. This keeps `base_link` in ROS REP-103
 - Steering feedback is much smoother than wheel speed, so the raw yaw
   cross-correlation peak is broad (460–710 ms); it is not a reliable pure
   timestamp offset.
-- LiDAR-IMU time offset is still pending a LiDAR-inertial calibration/front-end.
+- LiDAR-IMU time offset: C16 scan-to-scan azimuth-profile matching (2290 pairs,
+  median confidence 0.966) gives raw -40 ms, detrended/derivative -50 ms.
+  Use **-50 ms** as the initial value; verify the sign in the chosen LIO.
+- Translation/rotation are the legacy initial values plus the 180 deg IMU roll.
+  They are not yet optimized by a full LiDAR-IMU extrinsic solver.
+
+### LiDAR-IMU offset without SLAM
+
+`tools/estimate_lidar_imu_offset.py` builds a 360-degree azimuth occupancy
+profile per C16 scan, finds the circular shift between consecutive scans, and
+correlates the resulting yaw rate with gyro Z:
+
+```bash
+python3 /ws/tools/estimate_lidar_imu_offset.py /bags/<bag> --max-lag-ms 2000
+```
+
+The sign convention is: positive = add this many ms to LiDAR timestamps to
+align with the IMU. The output includes the scan-match confidence and the top
+correlation peaks, so a broad/ambiguous result can be rejected. This is a
+time-offset tool only; it does not refine extrinsic translation/rotation.
+
 
 ## 1. Reduce FTDI batching
 
