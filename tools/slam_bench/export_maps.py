@@ -45,7 +45,8 @@ def export_kiss(directory, out, voxel):
         pc = o3d.io.read_point_cloud(str(p))
         print(f'  {p.name}: {len(pc.points)} points')
         merged += pc
-    merged = merged.voxel_down_sample(voxel)
+    if voxel > 0:
+        merged = merged.voxel_down_sample(voxel)
     o3d.io.write_point_cloud(str(out), merged, write_ascii=False)
     print(f'KISS map: {len(merged.points)} points -> {out}')
 
@@ -71,7 +72,8 @@ def export_glim(dump, out, voxel):
     print(f'GLIM raw: {len(all_pts)} points')
     pc = o3d.geometry.PointCloud()
     pc.points = o3d.utility.Vector3dVector(all_pts.astype(np.float64))
-    pc = pc.voxel_down_sample(voxel)
+    if voxel > 0:
+        pc = pc.voxel_down_sample(voxel)
     o3d.io.write_point_cloud(str(out), pc, write_ascii=False)
     print(f'GLIM map: {len(pc.points)} points -> {out}')
 
@@ -82,7 +84,8 @@ def main():
     ap.add_argument('--kiss-out')
     ap.add_argument('--glim-dump')
     ap.add_argument('--glim-out')
-    ap.add_argument('--voxel', type=float, default=0.1)
+    ap.add_argument('--voxel', type=float, default=0.0,
+                    help='voxel size in meters; 0 keeps the raw merged cloud')
     args = ap.parse_args()
 
     if args.kiss_dir and args.kiss_out:

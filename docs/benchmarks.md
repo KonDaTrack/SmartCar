@@ -113,16 +113,21 @@ The benchmark outputs are kept on the development machine:
 
 | Map | File | Points | Size |
 |---|---|---:|---:|
-| KISS-SLAM | `/home/k/SmartCar/slam-bench/full/kiss/kiss_map.pcd` | 509,944 | 12 MB |
-| GLIM | `/home/k/SmartCar/slam-bench/full/glim/glim_map.pcd` | 5,302,597 | 61 MB |
+| KISS-SLAM raw | `/home/k/SmartCar/slam-bench/full/kiss/kiss_map_raw.pcd` | 512,383 | 12 MB |
+| KISS-SLAM 0.1 m | `/home/k/SmartCar/slam-bench/full/kiss/kiss_map.pcd` | 509,944 | 12 MB |
+| GLIM raw | `/home/k/SmartCar/slam-bench/full/glim/glim_map_raw.pcd` | 5,778,891 | 67 MB |
+| GLIM 0.1 m | `/home/k/SmartCar/slam-bench/full/glim/glim_map.pcd` | 5,302,597 | 61 MB |
 | Kinematic-ICP | not saved by the offline node | — | — |
 
-KISS-SLAM's five local-map PLYs were merged and voxel-downsampled to 0.1 m.
-GLIM's 137 submaps were transformed by each submap's `T_world_origin` and
-merged at 0.1 m. The maps are in each algorithm's own world frame; align them
-in CloudCompare or a similar viewer before comparing geometry. The KISS map
-keeps the PLY normals, which is why its PCD has `normal_x/y/z` fields.
-Export script: `tools/slam_bench/export_maps.py`.
+The `*_raw.pcd` files are the unsampled merges of the maps the SLAM systems
+saved; the 0.1 m versions are for quick viewing. KISS-SLAM's five local-map
+PLYs were merged directly (the PLYs are already the system's own voxelized
+local maps). GLIM's 137 submaps were transformed by each submap's
+`T_world_origin` and merged. The maps are in each algorithm's own world
+frame; align them in CloudCompare or a similar viewer before comparing
+geometry. The KISS map keeps the PLY normals, which is why its PCD has
+`normal_x/y/z` fields. Export script: `tools/slam_bench/export_maps.py`
+(`--voxel 0` keeps raw density; default is now 0).
 
 Kinematic-ICP's offline node only writes a TUM trajectory; if its local map is
 needed, run the online node on bag playback and record
