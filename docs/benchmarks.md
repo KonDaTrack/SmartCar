@@ -153,8 +153,9 @@ The benchmark outputs are kept on the development machine:
 
 | Map | File | Points | Size |
 |---|---|---:|---:|
-| KISS-SLAM raw | `/home/k/SmartCar/slam-bench/full/kiss/kiss_map_raw.pcd` | 512,383 | 12 MB |
-| KISS-SLAM 0.1 m | `/home/k/SmartCar/slam-bench/full/kiss/kiss_map.pcd` | 509,944 | 12 MB |
+| KISS-SLAM raw (default gates) | `/home/k/SmartCar/slam-bench/full/kiss/kiss_map_raw.pcd` | 512,383 | 12 MB |
+| KISS-SLAM raw (tuned loop, 2 closures) | `/home/k/SmartCar/slam-bench/full/kiss_loose/kiss_loose_map_raw.pcd` | 672,615 | 16 MB |
+| KISS-SLAM 0.1 m (default gates) | `/home/k/SmartCar/slam-bench/full/kiss/kiss_map.pcd` | 509,944 | 12 MB |
 | GLIM raw | `/home/k/SmartCar/slam-bench/full/glim/glim_map_raw.pcd` | 5,778,891 | 67 MB |
 | GLIM 0.1 m | `/home/k/SmartCar/slam-bench/full/glim/glim_map.pcd` | 5,302,597 | 61 MB |
 | Kinematic-ICP | not saved by the offline node | — | — |
