@@ -36,6 +36,7 @@ only loses the installation, not the scripts.
 | `trajectory_metrics.py` | Start-normalized path/loop metrics and XY plot |
 | `compare_to_odom.py` | Compare a TUM trajectory with `/chassis/odom` over time |
 | `odom_to_tum.py` | Export `/chassis/odom` to TUM |
+| `export_maps.py` | Merge KISS PLYs / GLIM submaps and write PCD maps |
 | `glim_offset_sweep.sh` | Sweep GLIM `imu_time_offset` on a clip |
 | `kinematic_variants.sh` | Kinematic deskew/regularization variants |
 | `build_kinematic.sh` | Rebuild the vendored/patch Kinematic-ICP wrapper |

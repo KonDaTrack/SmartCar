@@ -107,6 +107,27 @@ fusion, verify:
 This is separate from the SLAM comparison; KISS-SLAM and GLIM do not consume
 the wheel odometry.
 
+## Saved maps
+
+The benchmark outputs are kept on the development machine:
+
+| Map | File | Points | Size |
+|---|---|---:|---:|
+| KISS-SLAM | `/home/k/SmartCar/slam-bench/full/kiss/kiss_map.pcd` | 509,944 | 12 MB |
+| GLIM | `/home/k/SmartCar/slam-bench/full/glim/glim_map.pcd` | 5,302,597 | 61 MB |
+| Kinematic-ICP | not saved by the offline node | — | — |
+
+KISS-SLAM's five local-map PLYs were merged and voxel-downsampled to 0.1 m.
+GLIM's 137 submaps were transformed by each submap's `T_world_origin` and
+merged at 0.1 m. The maps are in each algorithm's own world frame; align them
+in CloudCompare or a similar viewer before comparing geometry. The KISS map
+keeps the PLY normals, which is why its PCD has `normal_x/y/z` fields.
+Export script: `tools/slam_bench/export_maps.py`.
+
+Kinematic-ICP's offline node only writes a TUM trajectory; if its local map is
+needed, run the online node on bag playback and record
+`/kinematic_icp/local_map`.
+
 ## Recommendation
 
 - **Offline map of this bag:** KISS-SLAM. Best trajectory consistency,
