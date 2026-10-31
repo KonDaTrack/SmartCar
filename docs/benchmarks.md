@@ -71,6 +71,47 @@ The green Kinematic-ICP path and the red chassis odometry path both depart
 from the LiDAR-only tracks; the chassis odometry is not a usable reference
 for this recording.
 
+### Parameter details
+
+| Parameter | GLIM | KISS-SLAM (default) | Kinematic-ICP |
+|---|---|---|---|
+| Sensor use | LiDAR + IMU | LiDAR only | LiDAR + wheel odom |
+| Front end | continuous-time LiDAR-IMU, GICP/VGICP | KISS-ICP point-to-point | 2-D unicycle + point-to-plane ICP |
+| Max range | 100 m | 100 m | 50 m |
+| Voxel / map resolution | 1.0 m preprocess, 0.5 m VGICP, 1.0 m iVox | 1.0 m odometry, 0.5 m local map | 0.25 m |
+| Key tuning | 2 threads, smoother lag 5 s, implicit loop distance 100 m, min overlap 0.2 | split 100 m, loop inliers 5, overlap 0.4 | 20 ICP iterations, adaptive odom regularization, TF timeout 0.1 s |
+| Time offset | `imu_time_offset = 0`, `points_time_offset = 0` | n/a | uses odom TF |
+| Extrinsic | `T_lidar_imu = [-0.96, 0, -1.2, 1, 0, 0, 0]` | n/a (LiDAR frame only) | `base_link -> rslidar` static TF |
+| Loop closure | implicit submap matching | local-map density/ORB + ICP | none (2-D odometry only) |
+
+The tuned KISS-SLAM run changes only the loop gates: local-map split 50 m,
+`inliers_threshold = 3`, `overlap_threshold = 0.25`. It produces 13 local
+maps and 2 accepted closures.
+
+### Trajectory deviations
+
+Pairwise 2-D deviation after subtracting each trajectory's first pose
+(no rigid alignment; Kinematic starts in the chassis-odom frame):
+
+| Pair | Mean | Median | p95 | End |
+|---|---:|---:|---:|---:|
+| GLIM vs KISS default | 4.89 m | 1.59 m | 15.51 m | 14.85 m |
+| GLIM vs KISS tuned | 4.78 m | 1.61 m | 14.48 m | 13.81 m |
+| KISS default vs KISS tuned | 0.86 m | 0.71 m | 2.36 m | 2.11 m |
+| Kinematic vs KISS tuned | 136.76 m | 127.02 m | 268.71 m | 240.80 m |
+
+Relative to the chassis-odometry length (716.1 m, itself not ground truth):
+GLIM -5.8%, KISS default -1.6%, KISS tuned -1.7%, Kinematic -2.3%.
+The KISS tuned run has the best loop/path ratio: 4.6 m / 704.0 m = 0.65%,
+versus KISS default 0.71%, GLIM 2.7%, and Kinematic 35%.
+
+Tuned KISS-SLAM metrics: 6,368 poses, 2-D path 704.0 m, 3-D path 709.2 m,
+2-D/3-D loop error 4.6 m, Z range -0.36..+21.06 m, end Z -0.30 m,
+2 closures, 71.1 s wall / 940.8 s CPU / 1,555 MB RSS. The larger Z range
+compared with the default run (max +11.6 m) means the accepted closures also
+moved the trajectory vertically; inspect the climb before treating the tuned
+result as metrically correct.
+
 ### What the numbers mean
 
 - **KISS-SLAM** is the best self-consistent run on this bag: its 2-D path is
