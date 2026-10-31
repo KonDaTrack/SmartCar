@@ -1,0 +1,14 @@
+# Diagnostic KISS-SLAM configuration: more local maps and looser loop gates.
+# Use with:
+#   kiss_slam_pipeline <bag> --topic /lslidar_point_cloud --config <this file>
+out_dir: slam_output_loose
+local_mapper:
+  voxel_size: 0.5
+  splitting_distance: 50.0
+loop_closer:
+  detector:
+    density_map_resolution: 0.5
+    density_threshold: 0.05
+    hamming_distance_threshold: 50
+    inliers_threshold: 3
+  overlap_threshold: 0.25

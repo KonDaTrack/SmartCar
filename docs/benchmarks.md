@@ -92,6 +92,46 @@ for this recording.
   odometry itself is questionable (see below). It is not suitable for this
   site as-is.
 
+### Why KISS-SLAM reported 0 closures
+
+KISS-SLAM's loop closure is **local-map level**, not scan-to-scan. It
+attempts a closure only when a local map is split (default
+`splitting_distance = 100 m`) and once at the end of the run. The final
+candidate must pass both the MapClosures inlier gate (`inliers_threshold = 5`)
+and the ICP overlap gate (`overlap_threshold = 0.4`).
+
+This recording has only five local maps. The final pose is 5 m horizontally
+from the start, but it is about 6.2 m lower and roughly 126 deg away in
+heading; the final local map only partially overlaps the start-area local
+map. The candidate overlaps observed with a looser detector were
+0.052, 0.100, 0.255 and 0.377; all are below the default 0.4, so every
+candidate was rejected. No candidate passed the default inlier gate either,
+which is why the default log contains no “Closure Detected” line.
+
+Re-running with a site-tuned config fixes this:
+
+```yaml
+local_mapper:
+  voxel_size: 0.5
+  splitting_distance: 50.0
+loop_closer:
+  detector:
+    inliers_threshold: 3
+  overlap_threshold: 0.25
+```
+
+It produces 13 local maps and accepts 2 closures (overlaps 0.255 and 0.377).
+The end pose changes from `z = -6.24 m, 3-D loop error 8.0 m` to
+`z = -0.3 m, 3-D loop error 4.6 m`; the 2-D path is 704.0 m. This confirms
+the loop is real and that the default gates were too strict for this
+start/end geometry, not that the vehicle failed to drive a loop.
+
+The tuned config is `tools/slam_bench/kiss_loop_loose.yaml`. Lowering the
+gates can also admit false loops, so keep the overlap gate and inspect the
+accepted closure locations on the trajectory plot. For a production run,
+drive through the start pose (same heading, same level) and continue a few
+metres past it so the final local map has enough overlap.
+
 ### Chassis odometry caveat
 
 The chassis odometry and both LiDAR trajectories disagree in the sign of the
