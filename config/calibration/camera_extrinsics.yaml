@@ -1,0 +1,27 @@
+# Camera extrinsics.
+#
+# PROVISIONAL: the numbers below are the vendor navigation manual's
+# base2camera example (1.217 0 1.269 0 0 0). They are NOT a measurement of
+# this vehicle and must be replaced after calibrating the D435i mounting.
+#
+# Keep in sync with base_to_camera_link in
+# src/smartcar_bringup/launch/sensors.launch.py.
+#
+# Frame convention:
+#   base_link      ROS REP-103: x forward, y left, z up
+#   camera_link    RealSense body frame: x forward, y left, z up
+#   camera_*_optical_frame  z forward, x right, y down
+#
+# The D435i driver publishes camera_link -> camera_*_frame and
+# camera_*_frame -> camera_*_optical_frame itself. This file only supplies
+# the missing base_link -> camera_link transform.
+base_link_to_camera_link:
+  x: 1.217
+  y: 0.0
+  z: 1.269
+  roll: 0.0
+  pitch: 0.0
+  yaw: 0.0
+  source: "vendor SmartCar navigation manual base2camera example; provisional"
+  calibrated: false
+  todo: "Measure the D435i lens/body pose on this vehicle; update launch file too."

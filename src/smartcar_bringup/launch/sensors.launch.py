@@ -84,6 +84,14 @@ def generate_launch_description():
         _static_tf('base_to_imu_link', 'base_link', 'imu_link',
                    0.0, 0.0, 0.2, roll=math.pi),
         _static_tf('base_to_gps', 'base_link', 'gps', 0.0, 0.0, 0.2),
+        # PROVISIONAL camera extrinsic copied from the vendor navigation
+        # manual's base2camera example. Replace with a measured
+        # base_link -> camera_link after calibrating the D435i mounting.
+        # The RealSense driver publishes the camera_link -> camera_*_frame
+        # and optical-frame TFs; only this vehicle-to-camera link is missing.
+        # Keep in sync with config/calibration/camera_extrinsics.yaml.
+        _static_tf('base_to_camera_link', 'base_link', 'camera_link',
+                   1.217, 0.0, 1.269),
 
         # VX1000 integrated navigation unit on /dev/ttyUSB0. Off by default so
         # the dev machine can run this launch file without the serial device.

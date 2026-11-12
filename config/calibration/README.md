@@ -9,6 +9,8 @@ Planned files:
 - `lidar_to_base.yaml` — 3D LiDAR mounting on `base_link`.
 - `laser_left_to_base.yaml` / `laser_right_to_base.yaml`.
 - `time_offsets.yaml` — LiDAR/IMU time offsets.
+- `camera_extrinsics.yaml` — provisional `base_link -> camera_link` for the
+  D435i; replace with a measurement before using camera data with LiDAR.
 - Optional camera intrinsics if perception is added later.
 
 Keep large point-cloud/map files out of Git (use the external SSD/NAS).

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Install the Intel RealSense camera driver and image-transport compression
+  plugins in the runtime image.
+- Publish a provisional `base_link -> camera_link` TF for the D435i; the
+  value still needs to be measured on the vehicle.
+- Document which sensor timestamps come from the host clock versus a sensor
+  clock, and when soft-sync offsets remain valid across restarts.
 - Wire the LSLIDAR C16 (`192.168.100.201`) and LakiBeam left/right
   (`192.168.100.200/.210`) drivers into `sensors.launch.py`.
 - Add `config/lslidar_cx.yaml` with the site IP, frame and topic settings.

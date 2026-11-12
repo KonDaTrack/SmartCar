@@ -11,10 +11,34 @@ odometry**. The 2D LiDARs and the RealSense camera are not recorded.
 | `/imu/data` | host `now()` after serial parse | VX1000 over FTDI at 460800 |
 | `/vehicle_status` | host `now()` on UDP receive | `.110` gateway, 100 Hz |
 | `/chassis/odom` | copies `/vehicle_status` stamp | Ackermann integration; separate from SLAM `/odom` |
+| `/camera/*` (when enabled) | RealSense driver frame timestamp | Not started/recorded by default; global/hardware timestamp domain, **not** assumed to be host `now()` |
 
-All three share the **host clock**, so there is no relative clock drift between
-them. What remains is transport/processing latency and jitter. This is what the
-soft-sync tools measure; it is not a replacement for PPS/PTP.
+C16, VX1000 and chassis all share the **host clock**, so there is no relative
+clock drift between them. What remains is transport/processing latency and
+jitter. This is what the soft-sync tools measure; it is not a replacement for
+PPS/PTP.
+
+### What the soft-sync offsets actually are
+
+`wheel_to_imu_offset_ms` and `lidar_to_imu_offset_ms` are **constant latency
+estimates**, not clock offsets. With `use_time_service: false`, the C16 driver
+stamps each packet with `this->get_clock()->now()` and derives the cloud stamp
+from the sweep end; the VX1000 driver stamps every message with `now()` as
+well, and the chassis gateway stamps `/vehicle_status` with `now()`. Therefore
+the relative offsets do not change just because the machine rebooted.
+
+They can change when the pipeline changes: USB latency timer, hub/port, CPU
+load, network path, driver version, or switching a sensor to its own clock.
+They do **not** remain valid if one side starts using sensor time. Examples:
+
+- setting C16 `use_time_service: true` (GPS/PTP/NTP mode);
+- making the VX1000 driver stamp with GPS week/second instead of `now()`;
+- recording the RealSense camera, whose driver timestamps frames in the
+  camera's global/hardware domain.
+
+In those cases the offset is session-dependent unless the sensor clock is
+hardware-locked to UTC (PPS + GPRMC/PTP) and the host is also locked. Measure
+the camera-to-host offset on the vehicle before mixing it with LiDAR/IMU.
 
 ## Static TF / extrinsics
 

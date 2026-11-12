@@ -11,7 +11,7 @@ last ROS run logs.
 | 2D LiDAR right | RichBeam LakiBeam1 | Ethernet, UDP 2568 | `192.168.100.210` | `/scan_right` (TF `laser_right`) |
 | GNSS/RTK + IMU | VX1000 | USB serial, 460800 | `/dev/ttyUSB0` (`/dev/gps`) | `/VX1000_ins`, `/VX1000_imu`, `/VX1000_gnss`, `/VX1000_stat`, `/VX1000_cov`, `/VX1000_odom`, `/imu/data`, `/gnss/fix` |
 | Chassis | CAN-to-Ethernet gateway | Ethernet, UDP 4001/4002 → `.10:8002` | `192.168.100.110` | `/vehicle_status`, `/chassis/odom` |
-| Camera | Intel RealSense D435i | USB 3 | `8086:0b3a`, serial `947522072480` | **Not used, not recorded** |
+| Camera | Intel RealSense D435i | USB 3 | `8086:0b3a`, serial `947522072480` | **Driver installed, not started/recorded**; TF `camera_link` published |
 
 ## Mounting / TF (from the legacy launch)
 
@@ -19,6 +19,11 @@ last ROS run logs.
 - Left 2D: x=1.7, y=+0.66, z=0.15, yaw ≈ +0.795 rad.
 - Right 2D: x=1.7, y=-0.66, z=0.15, yaw ≈ -0.795 rad.
 - IMU/GPS: `base_link` z=0.2, frames `imu_link` / `gps`.
+- Camera: `base_link -> camera_link` is **provisional** at
+  `(1.217, 0, 1.269, rpy 0)`, copied from the vendor navigation manual, not
+  measured on this vehicle. The RealSense driver supplies the camera internal
+  and optical-frame TFs. Replace both the launch value and
+  `config/calibration/camera_extrinsics.yaml` after calibration.
 
 ## Notes
 
