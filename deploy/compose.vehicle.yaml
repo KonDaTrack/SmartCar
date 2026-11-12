@@ -24,6 +24,8 @@ services:
     image: ${IMAGE:-smartcar-ros2}:${IMAGE_TAG:-dev}
     network_mode: host
     ipc: host
+    # The D435i IMU uses HID/IIO and needs writable IIO sysfs entries.
+    privileged: true
     environment: *common-env
     devices:
       - ${VX1000_DEVICE:-/dev/ttyUSB0}:/dev/ttyUSB0
@@ -95,6 +97,7 @@ services:
     image: ${IMAGE:-smartcar-ros2}:${IMAGE_TAG:-dev}
     network_mode: host
     ipc: host
+    privileged: true
     environment: *common-env
     devices:
       - ${VX1000_DEVICE:-/dev/ttyUSB0}:/dev/ttyUSB0
