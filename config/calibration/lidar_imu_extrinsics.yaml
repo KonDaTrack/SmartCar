@@ -1,51 +1,52 @@
-# Initial extrinsics ported from the active ROS 1 launch on the yuhuo vehicle.
-# Source:
-#   docs/autox_startup.sh
-#     -> automotive_launch/launch/autox_yuhuo_1.launch
+# Current vehicle extrinsics.
+# C16 x/z are measured on the vehicle; y and rpy are still unverified.
+# VX1000 frames follow the VxView installation configuration.
 # These values are published by smartcar_bringup/sensors.launch.py and must be
 # kept in sync with the static_transform_publisher entries there.
 #
 # base_link is the legacy vehicle frame; rslidar and imu_link are its children.
 base_link_to_rslidar:
-  x: 0.96
+  x: 1.2
   y: 0.0
-  z: 1.4
+  z: 1.47
   roll: 0.0
   pitch: 0.0
   yaw: 0.0
 
-base_link_to_imu_link:
+# VX1000 unified output frame. The INS/odometry and raw IMU data use the same
+# vendor NED body axes: x forward, y right, z down. The 180 deg roll maps all
+# VX1000-owned frames to base_link's ROS REP-103 z-up frame.
+base_link_to_vx1000_link:
   x: 0.0
   y: 0.0
-  z: 0.2
-  # VX1000 is x-forward / z-down (rest acc_z ~= -9.8). 180 deg roll maps it
-  # to the ROS REP-103 base frame (x-forward, y-left, z-up).
+  z: 0.0
   roll: 3.141592653589793
   pitch: 0.0
   yaw: 0.0
 
-base_link_to_gps:
+# Raw IMU stays in the vendor NED body frame: x forward, y right, z down.
+# The 180 deg roll lets TF convert it to base_link's REP-103 z-up frame.
+base_link_to_imu_link:
   x: 0.0
   y: 0.0
-  z: 0.2
-  roll: 0.0
+  z: 0.0
+  roll: 3.141592653589793
   pitch: 0.0
   yaw: 0.0
 
-# Derived: LiDAR origin expressed in imu_link. The IMU frame is rotated
-# 180 deg about x relative to base_link, so the base-frame offset
-# (0.96, 0, 1.2) becomes (0.96, 0, -1.2) in imu_link.
-lidar_in_imu_link:
-  x: 0.96
+# GPS/INS is part of the same VX1000 unified NED frame. VxView handles the
+# antenna/installation translation; the 180 deg roll matches imu_link.
+base_link_to_gps:
+  x: 0.0
   y: 0.0
-  z: -1.2
+  z: 0.0
   roll: 3.141592653589793
   pitch: 0.0
   yaw: 0.0
 
 notes: >
-  Translation comes from the active ROS 1 yuhuo launch. The 180 deg roll was
-  determined from the calibration bag: x is forward (acc_x correlates with
-  speed derivative) and z is down (rest acc_z ~= -9.8, right turn gyro z
-  positive). Verify in LIO; do not compensate a wrong extrinsic with a time
-  offset.
+  C16 x/z are measured on the vehicle; y and rpy are still unverified.
+  The 180 deg roll was determined from the calibration bag: x is forward
+  (acc_x correlates with speed derivative) and z is down (rest acc_z ~= -9.8,
+  right turn gyro z positive). Verify in LIO; do not compensate a wrong
+  extrinsic with a time offset.

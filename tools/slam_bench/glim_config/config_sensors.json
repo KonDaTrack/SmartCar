@@ -51,11 +51,11 @@
     // LiDAR config
     "global_shutter_lidar": false,
     // T_lidar_imu = T_lidar_base * T_base_imu from the vehicle static TF:
-    // lidar (0.96,0,1.4, identity), imu (0,0,0.2, roll=pi).
+    // lidar (1.2,0,1.47, identity), imu (0,0,0, roll=pi).
     "T_lidar_imu": [
-      -0.96,
-      0.0,
       -1.2,
+      0.0,
+      -1.47,
       1.0,
       0.0,
       0.0,

@@ -1,7 +1,8 @@
 # Time sync and vehicle recording
 
-Scope: LIO sensors only — **LSLIDAR C16, VX1000 IMU and the JD01 chassis
-odometry**. The 2D LiDARs and the RealSense camera are not recorded.
+Scope: LIO sensors — **LSLIDAR C16, VX1000 IMU and the JD01 chassis odometry**.
+The 2D LiDARs are not recorded. The RealSense camera is optional and is
+recorded only when `RECORD_CAMERA=1`.
 
 ## Current time bases
 
@@ -42,13 +43,14 @@ the camera-to-host offset on the vehicle before mixing it with LiDAR/IMU.
 
 ## Static TF / extrinsics
 
-`sensors.launch.py` publishes the initial extrinsics taken from the active ROS 1
-launch (`autox_startup.sh` -> `autox_yuhuo_1.launch`):
+`sensors.launch.py` publishes the current initial extrinsics:
 
 ```text
-base_link -> rslidar    x=0.96  y=0  z=1.4  rpy=0
-base_link -> imu_link   x=0     y=0  z=0.2  roll=pi, pitch=0, yaw=0
-base_link -> gps        x=0     y=0  z=0.2  rpy=0
+base_link -> rslidar    x=1.2  y=0  z=1.47  rpy=0
+base_link -> imu_link    x=0  y=0  z=0  roll=pi, pitch=0, yaw=0
+base_link -> vx1000_link x=0  y=0  z=0  roll=pi, pitch=0, yaw=0
+base_link -> gps         x=0  y=0  z=0  roll=pi, pitch=0, yaw=0
+base_link -> camera_link x=1.6  y=0  z=1.27  rpy=0 (x/z measured; y/rpy TBD)
 ```
 
 The values are recorded in
@@ -61,10 +63,12 @@ ros2 run tf2_ros tf2_echo base_link imu_link
 ros2 topic echo /tf_static --once
 ```
 
-The VX1000 reports `acc_z ~= -9.79` at rest, and forward acceleration appears
-on +x. Its frame is x-forward / z-down, so `imu_link` is rotated 180 deg about
-x relative to `base_link`. This keeps `base_link` in ROS REP-103
-(x-forward, y-left, z-up). Do not hide an extrinsic error with a time offset.
+The VX1000 installation translation is configured inside VxView. All
+VX1000-owned frames (`vx1000_link`, `gps`, raw `imu_link`) use the same vendor
+NED body axes (x-forward, y-right, z-down; at rest `acc_z ~= -9.8`). Each
+`base_link -> ...` TF therefore has a 180 deg roll so TF converts them to ROS
+REP-103 (x-forward, y-left, z-up, rest `acc_z ~= +9.8`). Do not remap the raw
+IMU values in the driver. Do not hide an extrinsic error with a time offset.
 
 ## Preliminary calibration result (20261030_065908)
 

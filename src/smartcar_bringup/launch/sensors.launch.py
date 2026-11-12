@@ -72,26 +72,38 @@ def generate_launch_description():
             default_value=os.environ.get('SMARTCAR_START_SCAN2D', '0'),
             description='Start the LakiBeam 2D scanners (not needed for LIO)',
         ),
+        DeclareLaunchArgument(
+            'start_camera',
+            default_value=os.environ.get('SMARTCAR_START_CAMERA', '0'),
+            description='Start the D435i camera and its IMU',
+        ),
         LogInfo(msg=['[smartcar:sensors] config_dir=', config_dir, ' host_ip=', host_ip]),
 
         # Static extrinsics from the active ROS 1 launch on this vehicle:
         #   docs/autox_startup.sh -> automotive_launch/autox_yuhuo_1.launch
         # Keep in sync with config/calibration/lidar_imu_extrinsics.yaml.
-        _static_tf('base_to_rslidar', 'base_link', 'rslidar', 0.96, 0.0, 1.4),
-        # VX1000 reports x-forward / z-down (rest acc_z ~= -9.8). Rotate the
-        # IMU frame by 180 deg about x so base_link remains ROS REP-103
-        # (x-forward, y-left, z-up).
+        _static_tf('base_to_rslidar', 'base_link', 'rslidar', 1.2, 0.0, 1.47),
+        # VX1000 INS/odometry outputs use the same vendor NED body axes as the
+        # raw IMU (x forward, y right, z down). Rotate into base_link's
+        # REP-103 z-up frame; VxView handles the installation translation.
+        _static_tf('base_to_vx1000_link', 'base_link', 'vx1000_link',
+                   0.0, 0.0, 0.0, roll=math.pi),
+        # Raw VX1000 IMU is in the vendor NED body frame:
+        #   x forward, y right, z down; at rest acc_z ~= -9.8.
+        # Keep the raw values unchanged and let the TF rotate imu_link into
+        # the ROS REP-103 base frame (x forward, y left, z up): 180 deg roll.
         _static_tf('base_to_imu_link', 'base_link', 'imu_link',
-                   0.0, 0.0, 0.2, roll=math.pi),
-        _static_tf('base_to_gps', 'base_link', 'gps', 0.0, 0.0, 0.2),
-        # PROVISIONAL camera extrinsic copied from the vendor navigation
-        # manual's base2camera example. Replace with a measured
-        # base_link -> camera_link after calibrating the D435i mounting.
+                   0.0, 0.0, 0.0, roll=math.pi),
+        # GPS/INS is part of the same VX1000 unified NED frame; VxView handles
+        # the antenna/installation translation. Match imu_link's 180 deg roll.
+        _static_tf('base_to_gps', 'base_link', 'gps', 0.0, 0.0, 0.0,
+                   roll=math.pi),
+        # Measured x/z for the D435i; y and rotation still need calibration.
         # The RealSense driver publishes the camera_link -> camera_*_frame
         # and optical-frame TFs; only this vehicle-to-camera link is missing.
         # Keep in sync with config/calibration/camera_extrinsics.yaml.
         _static_tf('base_to_camera_link', 'base_link', 'camera_link',
-                   1.217, 0.0, 1.269),
+                   1.6, 0.0, 1.27),
 
         # VX1000 integrated navigation unit on /dev/ttyUSB0. Off by default so
         # the dev machine can run this launch file without the serial device.
@@ -132,4 +144,33 @@ def generate_launch_description():
         _lakibeam('lakibeam_right', 'laser_right', 'scan_right',
                   '192.168.100.210', '2568', host_ip,
                   IfCondition(LaunchConfiguration('start_scan2d'))),
+
+        # Intel RealSense D435i. The driver is installed in the runtime image;
+        # keep it off on the dev machine unless SMARTCAR_START_CAMERA=1 and the
+        # USB device is passed through. Topics use the /camera/... namespace;
+        # the driver publishes camera_link -> camera_*_frame TFs.
+        Node(
+            package='realsense2_camera',
+            executable='realsense2_camera_node',
+            name='camera',
+            output='screen',
+            emulate_tty=True,
+            condition=IfCondition(LaunchConfiguration('start_camera')),
+            parameters=[{
+                'serial_no': '_947522072480',
+                'enable_color': True,
+                'enable_depth': True,
+                'enable_infra1': True,
+                'enable_infra2': True,
+                'enable_gyro': True,
+                'enable_accel': True,
+                'unite_imu_method': 2,
+                'enable_sync': True,
+                'rgb_camera.color_profile': '640x480x15',
+                'depth_module.depth_profile': '640x480x15',
+                'depth_module.infra_profile': '640x480x15',
+                'align_depth.enable': False,
+                'pointcloud.enable': False,
+            }],
+        ),
     ])

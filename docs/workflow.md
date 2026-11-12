@@ -137,7 +137,8 @@ Vehicle layout:
 5. `network_mode: host` and `ipc: host` for DDS, LiDAR UDP and shared memory.
 6. Device access (VX1000 serial) only in the container that needs it.
 7. Stop ROS 1 drivers before starting ROS 2 drivers.
-8. No camera driver unless something actually uses it.
+8. Start the camera only when it is used; recording is opt-in with
+   `RECORD_CAMERA=1`.
 
 ## Bandwidth
 

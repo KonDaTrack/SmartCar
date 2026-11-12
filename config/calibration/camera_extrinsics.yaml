@@ -1,8 +1,7 @@
 # Camera extrinsics.
 #
-# PROVISIONAL: the numbers below are the vendor navigation manual's
-# base2camera example (1.217 0 1.269 0 0 0). They are NOT a measurement of
-# this vehicle and must be replaced after calibrating the D435i mounting.
+# x/z are measured on the vehicle. y and the rotation are still unverified;
+# replace them after calibrating the D435i mounting and Camera-LiDAR/Camera-IMU.
 #
 # Keep in sync with base_to_camera_link in
 # src/smartcar_bringup/launch/sensors.launch.py.
@@ -16,12 +15,12 @@
 # camera_*_frame -> camera_*_optical_frame itself. This file only supplies
 # the missing base_link -> camera_link transform.
 base_link_to_camera_link:
-  x: 1.217
+  x: 1.6
   y: 0.0
-  z: 1.269
+  z: 1.27
   roll: 0.0
   pitch: 0.0
   yaw: 0.0
-  source: "vendor SmartCar navigation manual base2camera example; provisional"
+  source: "vehicle measurement for x/z; y and rotation unverified"
   calibrated: false
-  todo: "Measure the D435i lens/body pose on this vehicle; update launch file too."
+  todo: "Measure y and camera orientation; refine with Camera-LiDAR/Camera-IMU."

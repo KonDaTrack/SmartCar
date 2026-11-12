@@ -11,24 +11,29 @@ last ROS run logs.
 | 2D LiDAR right | RichBeam LakiBeam1 | Ethernet, UDP 2568 | `192.168.100.210` | `/scan_right` (TF `laser_right`) |
 | GNSS/RTK + IMU | VX1000 | USB serial, 460800 | `/dev/ttyUSB0` (`/dev/gps`) | `/VX1000_ins`, `/VX1000_imu`, `/VX1000_gnss`, `/VX1000_stat`, `/VX1000_cov`, `/VX1000_odom`, `/imu/data`, `/gnss/fix` |
 | Chassis | CAN-to-Ethernet gateway | Ethernet, UDP 4001/4002 → `.10:8002` | `192.168.100.110` | `/vehicle_status`, `/chassis/odom` |
-| Camera | Intel RealSense D435i | USB 3 | `8086:0b3a`, serial `947522072480` | **Driver installed, not started/recorded**; TF `camera_link` published |
+| Camera | Intel RealSense D435i | USB 3 | `8086:0b3a`, serial `947522072480` | `/camera/*`; starts with `SMARTCAR_START_CAMERA=1`; `RECORD_CAMERA=1` records it |
 
 ## Mounting / TF (from the legacy launch)
 
-- 3D LiDAR: `base_link` + (x=0.96, z=1.4), frame `rslidar`.
+- 3D LiDAR: `base_link` + (x=1.2, z=1.47), frame `rslidar`.
 - Left 2D: x=1.7, y=+0.66, z=0.15, yaw ≈ +0.795 rad.
 - Right 2D: x=1.7, y=-0.66, z=0.15, yaw ≈ -0.795 rad.
-- IMU/GPS: `base_link` z=0.2, frames `imu_link` / `gps`.
-- Camera: `base_link -> camera_link` is **provisional** at
-  `(1.217, 0, 1.269, rpy 0)`, copied from the vendor navigation manual, not
-  measured on this vehicle. The RealSense driver supplies the camera internal
-  and optical-frame TFs. Replace both the launch value and
-  `config/calibration/camera_extrinsics.yaml` after calibration.
+- VX1000 frames: `vx1000_link`, `gps` and raw `imu_link` all use the vendor
+  NED body axes (x forward, y right, z down; rest `acc_z=-9.8`). Each
+  `base_link -> ...` static TF has a 180 deg roll so TF converts them to
+  REP-103 (x forward, y left, z up). VxView handles installation translation
+  and any orientation configured inside the unit.
+- Camera: `base_link -> camera_link` is `(1.6, 0, 1.27, rpy 0)`. The x/z
+  values are measured on the vehicle; y and rotation are still unverified.
+  The RealSense driver supplies the camera internal and optical-frame TFs.
+  Refine the launch value and `config/calibration/camera_extrinsics.yaml`
+  after calibration.
 
 ## Notes
 
-- The VX1000 is an integrated GNSS/RTK + IMU unit; the IMU data used by SLAM
-  comes from it. The RealSense built-in IMU is disabled in the legacy launch.
+- The VX1000 is an integrated GNSS/RTK + IMU unit; the IMU data used by LIO
+  comes from it. The D435i IMU is available for visual-inertial work when the
+  camera node is started.
 - The chassis provides speed, steering and `total_odometer`. `smartcar_chassis`
   integrates `/vehicle_status` into `/chassis/odom` using the Ackermann model
   (`wheel_base=1.2`, `is_akm=true`). Its `chassis_odom -> base_link` TF is off

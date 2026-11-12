@@ -5,7 +5,7 @@
 # (script and monitor installed in /usr/local/bin).
 #
 # Default topics: C16, VX1000 IMU, chassis status/odometry and TF.
-# No 2D LiDARs and no camera.
+# No 2D LiDARs. Set RECORD_CAMERA=1 to append the D435i streams.
 #
 # Environment:
 #   BAGS_DIR           bag root (default /bags)
@@ -14,6 +14,8 @@
 #   RECORD_SECONDS     stop after N seconds, 0 = until Ctrl-C (default 0)
 #   START_SYNC_MONITOR 1 = also record arrival/stamp latency CSV (default 1)
 #   RECORD_TOPICS      space-separated override of the topic list
+#   RECORD_CAMERA      1 = append D435i color/depth/infra/IMU topics
+#   BAG_NAME           optional output bag name (default: timestamp)
 set -euo pipefail
 
 ROS_DISTRO="${ROS_DISTRO:-humble}"
@@ -22,9 +24,15 @@ MIN_FREE_GB="${MIN_FREE_GB:-20}"
 MAX_BAG_SIZE_GB="${MAX_BAG_SIZE_GB:-20}"
 RECORD_SECONDS="${RECORD_SECONDS:-0}"
 START_SYNC_MONITOR="${START_SYNC_MONITOR:-1}"
+RECORD_CAMERA="${RECORD_CAMERA:-0}"
+BAG_NAME="${BAG_NAME:-}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STAMP="$(date +%Y%m%d_%H%M%S)"
-OUT="${BAGS_DIR}/${STAMP}"
+if [ -n "$BAG_NAME" ]; then
+  OUT="${BAGS_DIR}/${BAG_NAME}"
+else
+  OUT="${BAGS_DIR}/${STAMP}"
+fi
 
 # ROS setup scripts reference optional variables; do not run them with nounset.
 set +u
@@ -58,6 +66,21 @@ else
     /tf
     /tf_static
   )
+  if [ "$RECORD_CAMERA" = "1" ]; then
+    TOPICS+=(
+      /camera/color/image_raw
+      /camera/color/camera_info
+      /camera/depth/image_rect_raw
+      /camera/depth/camera_info
+      /camera/infra1/image_rect_raw
+      /camera/infra1/camera_info
+      /camera/infra2/image_rect_raw
+      /camera/infra2/camera_info
+      /camera/imu
+      /camera/gyro/sample
+      /camera/accel/sample
+    )
+  fi
 fi
 
 cat > "${OUT}.manifest.yaml" <<EOF

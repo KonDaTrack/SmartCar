@@ -291,7 +291,9 @@ private:
 
     smartcar_msgs::msg::Vx1000Imu msg;
     msg.header.stamp = now();
-    msg.header.frame_id = frame_id_;
+    // This is raw IMU data, so it belongs at the physical IMU location.
+    // frame_id_ (vx1000_link) is the fused INS output frame at base_link.
+    msg.header.frame_id = imu_frame_id_;
     msg.gps_week = f.bit.gps_week;
     msg.gps_week_second = static_cast<float>(f.bit.gps_week_second * 1e-3);
     msg.gyr_x = f.bit.gyr_x * 1e-5 - 500.0;
