@@ -11,7 +11,7 @@ last ROS run logs.
 | 2D LiDAR right | RichBeam LakiBeam1 | Ethernet, UDP 2568 | `192.168.100.210` | `/scan_right` (TF `laser_right`) |
 | GNSS/RTK + IMU | VX1000 | USB serial, 460800 | `/dev/ttyUSB0` (`/dev/gps`) | `/VX1000_ins`, `/VX1000_imu`, `/VX1000_gnss`, `/VX1000_stat`, `/VX1000_cov`, `/VX1000_odom`, `/imu/data`, `/gnss/fix` |
 | Chassis | CAN-to-Ethernet gateway | Ethernet, UDP 4001/4002 → `.10:8002` | `192.168.100.110` | `/vehicle_status`, `/chassis/odom` |
-| Camera | Intel RealSense D435i | USB 3 | `8086:0b3a`, serial `947522072480` | `/camera/*`; starts with `SMARTCAR_START_CAMERA=1`; `RECORD_CAMERA=1` records it |
+| Camera | Intel RealSense D435i | USB 3 | `8086:0b3a`, serial `947522072480` | `/camera/camera/*`; starts with `SMARTCAR_START_CAMERA=1`; `RECORD_CAMERA=1` records it |
 
 ## Mounting / TF (from the legacy launch)
 
@@ -23,6 +23,9 @@ last ROS run logs.
   `base_link -> ...` static TF has a 180 deg roll so TF converts them to
   REP-103 (x forward, y left, z up). VxView handles installation translation
   and any orientation configured inside the unit.
+- Camera USB: the D435i currently enumerates at USB 2.1 (480 Mbit/s) with
+  reduced performance and an IMU calibration warning. Move it to a USB 3 port
+  for the full color/depth/infra/IMU set.
 - Camera: `base_link -> camera_link` is `(1.6, 0, 1.27, rpy 0)`. The x/z
   values are measured on the vehicle; y and rotation are still unverified.
   The RealSense driver supplies the camera internal and optical-frame TFs.

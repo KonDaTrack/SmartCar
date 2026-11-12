@@ -164,6 +164,8 @@ def generate_launch_description():
                 'enable_infra2': True,
                 'enable_gyro': True,
                 'enable_accel': True,
+                'gyro_fps': 200,
+                'accel_fps': 250,
                 'unite_imu_method': 2,
                 'enable_sync': True,
                 'rgb_camera.color_profile': '640x480x15',

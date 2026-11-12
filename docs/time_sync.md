@@ -12,7 +12,7 @@ recorded only when `RECORD_CAMERA=1`.
 | `/imu/data` | host `now()` after serial parse | VX1000 over FTDI at 460800 |
 | `/vehicle_status` | host `now()` on UDP receive | `.110` gateway, 100 Hz |
 | `/chassis/odom` | copies `/vehicle_status` stamp | Ackermann integration; separate from SLAM `/odom` |
-| `/camera/*` (when enabled) | RealSense driver frame timestamp | Not started/recorded by default; global/hardware timestamp domain, **not** assumed to be host `now()` |
+| `/camera/camera/*` (when enabled) | RealSense driver frame timestamp | Not started/recorded by default; global/hardware timestamp domain, **not** assumed to be host `now()` |
 
 C16, VX1000 and chassis all share the **host clock**, so there is no relative
 clock drift between them. What remains is transport/processing latency and

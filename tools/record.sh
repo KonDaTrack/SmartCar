@@ -68,17 +68,17 @@ else
   )
   if [ "$RECORD_CAMERA" = "1" ]; then
     TOPICS+=(
-      /camera/color/image_raw
-      /camera/color/camera_info
-      /camera/depth/image_rect_raw
-      /camera/depth/camera_info
-      /camera/infra1/image_rect_raw
-      /camera/infra1/camera_info
-      /camera/infra2/image_rect_raw
-      /camera/infra2/camera_info
-      /camera/imu
-      /camera/gyro/sample
-      /camera/accel/sample
+      /camera/camera/color/image_raw
+      /camera/camera/color/camera_info
+      /camera/camera/depth/image_rect_raw
+      /camera/camera/depth/camera_info
+      /camera/camera/infra1/image_rect_raw
+      /camera/camera/infra1/camera_info
+      /camera/camera/infra2/image_rect_raw
+      /camera/camera/infra2/camera_info
+      /camera/camera/imu
+      /camera/camera/gyro/sample
+      /camera/camera/accel/sample
     )
   fi
 fi
