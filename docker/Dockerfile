@@ -63,8 +63,11 @@ SHELL ["/bin/bash", "-lc"]
 USER root
 
 COPY src /ws/src
+# kinematic_icp is an offline benchmark package: it FetchContent-downloads
+# KISS-ICP from GitHub and is not part of the vehicle runtime.
 RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
  && colcon build --merge-install --install-base /ws/install \
+      --packages-skip kinematic_icp \
       --cmake-args -DCMAKE_BUILD_TYPE=Release
 
 # ---------------------------------------------------------------------------
