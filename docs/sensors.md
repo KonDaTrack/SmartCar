@@ -23,9 +23,9 @@ last ROS run logs.
   `base_link -> ...` static TF has a 180 deg roll so TF converts them to
   REP-103 (x forward, y left, z up). VxView handles installation translation
   and any orientation configured inside the unit.
-- Camera USB: the D435i currently enumerates at USB 2.1 (480 Mbit/s) with
-  reduced performance and an IMU calibration warning. Move it to a USB 3 port
-  for the full color/depth/infra/IMU set.
+- Camera USB: the D435i **must** be connected to a USB 3 SuperSpeed port
+  (`lsusb -t` shows `5000M`). USB 2.1 (480 Mbit/s) is not acceptable for
+  calibration or the full color/depth/infra/IMU stream set.
 - Camera: `base_link -> camera_link` is `(1.6, 0, 1.27, rpy 0)`. The x/z
   values are measured on the vehicle; y and rotation are still unverified.
   The RealSense driver supplies the camera internal and optical-frame TFs.
