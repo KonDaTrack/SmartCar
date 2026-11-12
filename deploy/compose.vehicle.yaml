@@ -27,6 +27,13 @@ services:
     environment: *common-env
     devices:
       - ${VX1000_DEVICE:-/dev/ttyUSB0}:/dev/ttyUSB0
+      # RealSense uses the V4L2 video nodes as well as /dev/bus/usb.
+      - /dev/video0
+      - /dev/video1
+      - /dev/video2
+      - /dev/video3
+      - /dev/video4
+      - /dev/video5
     group_add:
       - dialout
       - plugdev
@@ -91,6 +98,12 @@ services:
     environment: *common-env
     devices:
       - ${VX1000_DEVICE:-/dev/ttyUSB0}:/dev/ttyUSB0
+      - /dev/video0
+      - /dev/video1
+      - /dev/video2
+      - /dev/video3
+      - /dev/video4
+      - /dev/video5
     group_add:
       - dialout
       - plugdev
