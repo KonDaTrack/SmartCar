@@ -1,0 +1,11 @@
+version: v0.1.3
+created: 2026-11-12T17:11:28+08:00
+git_sha: 9a3c993351b6e1bc38a78e1291fb7e8cfa510c9d
+git_describe: 9a3c993
+image: smartcar-ros2:v0.1.3
+image_id: sha256:b822a0c38562539bcbbb08f73496b33d99e8f0124f86499c777a3b55530fe50d
+base_image: ros:humble-ros-base
+ros_domain_id: 42
+config_dir: ./config
+vx1000_device: /dev/ttyUSB0
+notes: "Skeleton release; drivers/SLAM still TODO."
