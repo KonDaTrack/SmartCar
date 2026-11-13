@@ -45,7 +45,7 @@ services:
     device_cgroup_rules:
       - 'c 189:* rmw'
     command: ros2 launch smartcar_bringup sensors.launch.py
-    restart: unless-stopped
+    restart: "no"
     logging: *default-logging
 
   slam:
@@ -56,7 +56,7 @@ services:
     volumes:
       - ${SMARTCAR_CONFIG_HOST_DIR:-../config}:/config:ro
     command: ros2 launch smartcar_bringup slam.launch.py
-    restart: unless-stopped
+    restart: "no"
     logging: *default-logging
     # cpuset: "2-3"
 
@@ -68,7 +68,7 @@ services:
     volumes:
       - ${SMARTCAR_CONFIG_HOST_DIR:-../config}:/config:ro
     command: ros2 launch smartcar_bringup chassis.launch.py
-    restart: unless-stopped
+    restart: "no"
     profiles: [chassis]
     logging: *default-logging
 
@@ -116,6 +116,6 @@ services:
     device_cgroup_rules:
       - 'c 189:* rmw'
     command: ros2 launch smartcar_bringup vehicle.launch.py
-    restart: unless-stopped
+    restart: "no"
     profiles: [combined]
     logging: *default-logging
