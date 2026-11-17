@@ -11,7 +11,7 @@ last ROS run logs.
 | 2D LiDAR right | RichBeam LakiBeam1 | Ethernet, UDP 2568 | `192.168.100.210` | `/scan_right` (TF `laser_right`) |
 | GNSS/RTK + IMU | VX1000 | USB serial, 460800 | `/dev/ttyUSB0` (`/dev/gps`) | `/VX1000_ins`, `/VX1000_imu`, `/VX1000_gnss`, `/VX1000_stat`, `/VX1000_cov`, `/VX1000_odom`, `/imu/data`, `/gnss/fix` |
 | Chassis | CAN-to-Ethernet gateway | Ethernet, UDP 4001/4002 → `.10:8002` | `192.168.100.110` | `/vehicle_status`, `/chassis/odom` |
-| Camera | Intel RealSense D435i | USB 3 | `8086:0b3a`, serial `947522072480` | `/camera/camera/*`; starts with `SMARTCAR_START_CAMERA=1`; `RECORD_CAMERA=1` records it |
+| Camera | Intel RealSense D435i | USB 3 | `8086:0b3a`, serial `947522072480` | `/camera/camera/*`; starts with `SMARTCAR_START_CAMERA=1`; `RECORD_CAMERA=1` records color/depth/infra; camera IMU disabled |
 
 ## Mounting / TF (from the legacy launch)
 
@@ -40,8 +40,8 @@ last ROS run logs.
 ## Notes
 
 - The VX1000 is an integrated GNSS/RTK + IMU unit; the IMU data used by LIO
-  comes from it. The D435i IMU is available for visual-inertial work when the
-  camera node is started.
+  comes from it. The D435i IMU is disabled; the camera contributes only
+  color/depth/infra streams.
 - The chassis provides speed, steering and `total_odometer`. `smartcar_chassis`
   integrates `/vehicle_status` into `/chassis/odom` using the Ackermann model
   (`wheel_base=1.2`, `is_akm=true`). Its `chassis_odom -> base_link` TF is off

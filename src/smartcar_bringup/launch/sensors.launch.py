@@ -75,7 +75,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'start_camera',
             default_value=os.environ.get('SMARTCAR_START_CAMERA', '0'),
-            description='Start the D435i camera and its IMU',
+            description='Start the D435i camera (color/depth/infra; IMU disabled)',
         ),
         LogInfo(msg=['[smartcar:sensors] config_dir=', config_dir, ' host_ip=', host_ip]),
 
@@ -153,6 +153,8 @@ def generate_launch_description():
         # keep it off on the dev machine unless SMARTCAR_START_CAMERA=1 and the
         # USB device is passed through. Topics use the /camera/... namespace;
         # the driver publishes camera_link -> camera_*_frame TFs.
+        # The D435i IMU is intentionally disabled; VX1000 is the only IMU used
+        # for calibration and fusion. Only color/depth/infra streams remain.
         Node(
             package='realsense2_camera',
             executable='realsense2_camera_node',
@@ -166,11 +168,8 @@ def generate_launch_description():
                 'enable_depth': True,
                 'enable_infra1': True,
                 'enable_infra2': True,
-                'enable_gyro': True,
-                'enable_accel': True,
-                'gyro_fps': 200,
-                'accel_fps': 250,
-                'unite_imu_method': 2,
+                'enable_gyro': False,
+                'enable_accel': False,
                 'enable_sync': True,
                 'rgb_camera.color_profile': '640x480x15',
                 'depth_module.depth_profile': '640x480x15',

@@ -1,8 +1,9 @@
 # Time sync and vehicle recording
 
-Scope: LIO sensors — **LSLIDAR C16, VX1000 IMU and the JD01 chassis odometry**.
-The 2D LiDARs are not recorded. The RealSense camera is optional and is
-recorded only when `RECORD_CAMERA=1`.
+Scope: **LSLIDAR C16, VX1000 INS/IMU and the optional D435i camera**.
+The 2D LiDARs and chassis topics are not recorded. The camera is recorded only
+when `RECORD_CAMERA=1`; its own IMU is disabled and VX1000 is the only IMU
+used for calibration and fusion.
 
 ## Current time bases
 
@@ -12,7 +13,7 @@ recorded only when `RECORD_CAMERA=1`.
 | `/imu/data` | host `now()` after serial parse | VX1000 over FTDI at 460800 |
 | `/vehicle_status` | host `now()` on UDP receive | `.110` gateway, 100 Hz |
 | `/chassis/odom` | copies `/vehicle_status` stamp | Ackermann integration; separate from SLAM `/odom` |
-| `/camera/camera/*` (when enabled) | RealSense driver frame timestamp | Not started/recorded by default; global/hardware timestamp domain, **not** assumed to be host `now()` |
+| `/camera/camera/*` (when enabled) | RealSense driver frame timestamp | Not started/recorded by default; global/hardware timestamp domain, **not** assumed to be host `now()`; camera IMU streams are disabled |
 
 C16, VX1000 and chassis all share the **host clock**, so there is no relative
 clock drift between them. What remains is transport/processing latency and
@@ -143,6 +144,12 @@ Then record with the `record` profile:
 docker compose -f deploy/compose.vehicle.yaml --profile record run --rm record
 ```
 
+To include the camera streams:
+
+```bash
+RECORD_CAMERA=1 docker compose -f deploy/compose.vehicle.yaml --profile record run --rm record
+```
+
 The recorder writes MCAP + zstd to `SMARTCAR_BAGS_HOST_DIR`
 (default `/home/yunle/bags`), splits at `MAX_BAG_SIZE_GB`, refuses to start
 below `MIN_FREE_GB`, and stops cleanly on Ctrl-C so the MCAP metadata is
@@ -152,13 +159,29 @@ Default topics:
 
 ```text
 /lslidar_point_cloud
+/VX1000_ins
+/VX1000_cov
+/VX1000_stat
 /imu/data
 /VX1000_imu
-/vehicle_status
-/chassis/odom
 /tf
 /tf_static
 ```
+
+With `RECORD_CAMERA=1`, the recorder appends:
+
+```text
+/camera/camera/color/image_raw
+/camera/camera/color/camera_info
+/camera/camera/depth/image_rect_raw
+/camera/camera/depth/camera_info
+/camera/camera/infra1/image_rect_raw
+/camera/camera/infra1/camera_info
+/camera/camera/infra2/image_rect_raw
+/camera/camera/infra2/camera_info
+```
+
+The D435i gyro/accel/IMU topics are not recorded.
 
 A time-offset monitor is started automatically and writes
 `<bag>_sync/sync_<timestamp>.csv` with arrival time, header stamp, latency and

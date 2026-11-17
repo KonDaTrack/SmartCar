@@ -4,8 +4,9 @@
 # Works in the dev container (repo at /ws) and in the vehicle runtime image
 # (script and monitor installed in /usr/local/bin).
 #
-# Default topics: C16, VX1000 IMU, chassis status/odometry and TF.
-# No 2D LiDARs. Set RECORD_CAMERA=1 to append the D435i streams.
+# Default topics: C16, VX1000 INS position/status, VX1000 IMU and TF.
+# No 2D LiDARs and no chassis topics. Set RECORD_CAMERA=1 to append the
+# D435i color/depth/infra streams (its IMU is disabled in the launch file).
 #
 # Environment:
 #   BAGS_DIR           bag root (default /bags)
@@ -14,7 +15,7 @@
 #   RECORD_SECONDS     stop after N seconds, 0 = until Ctrl-C (default 0)
 #   START_SYNC_MONITOR 1 = also record arrival/stamp latency CSV (default 1)
 #   RECORD_TOPICS      space-separated override of the topic list
-#   RECORD_CAMERA      1 = append D435i color/depth/infra/IMU topics
+#   RECORD_CAMERA      1 = append D435i color/depth/infra topics (no IMU)
 #   BAG_NAME           optional output bag name (default: timestamp)
 set -euo pipefail
 
@@ -59,10 +60,11 @@ if [ -n "${RECORD_TOPICS:-}" ]; then
 else
   TOPICS=(
     /lslidar_point_cloud
+    /VX1000_ins
+    /VX1000_cov
+    /VX1000_stat
     /imu/data
     /VX1000_imu
-    /vehicle_status
-    /chassis/odom
     /tf
     /tf_static
   )
@@ -76,9 +78,6 @@ else
       /camera/camera/infra1/camera_info
       /camera/camera/infra2/image_rect_raw
       /camera/camera/infra2/camera_info
-      /camera/camera/imu
-      /camera/camera/gyro/sample
-      /camera/camera/accel/sample
     )
   fi
 fi

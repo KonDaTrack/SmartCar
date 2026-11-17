@@ -23,7 +23,7 @@ the vehicle. SLAM, calibration and health checks remain TODO.
   - `record` — headless `ros2 bag record` to the dev machine.
   - `replay` is a one-off container.
 - **No ROS 1 bridge, no Foxglove.** RealSense recording is opt-in with
-  `RECORD_CAMERA=1`.
+  `RECORD_CAMERA=1`; the D435i IMU is disabled and VX1000 is the only IMU.
 - **Non-root containers:** images create a `smartcar` user (UID/GID 1000); dev
   build artifacts stay owned by the host user, and VX1000 serial access uses
   `dialout`.
