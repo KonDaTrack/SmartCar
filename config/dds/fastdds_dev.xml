@@ -5,6 +5,9 @@
       <transport_id>smartcar_udp_v4</transport_id>
       <type>UDPv4</type>
       <interfaceWhiteList>
+        <!-- Loopback keeps local camera/calibration nodes connected while the
+             vehicle Ethernet interface is down. -->
+        <address>127.0.0.1</address>
         <address>192.168.100.123</address>
       </interfaceWhiteList>
     </transport_descriptor>
