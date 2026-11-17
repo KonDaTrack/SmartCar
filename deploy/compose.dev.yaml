@@ -110,6 +110,30 @@ services:
     profiles: [viz]
     logging: *default-logging
 
+  # Interactive calibration shell with X11. The GUI stays on the dev host;
+  # the vehicle only publishes camera/LiDAR topics over DDS.
+  calib:
+    image: ${IMAGE:-smartcar-ros2}:dev
+    network_mode: host
+    ipc: host
+    working_dir: /ws
+    stdin_open: true
+    tty: true
+    group_add:
+      - video
+      - render
+    environment:
+      <<: *common-env
+      DISPLAY: ${DISPLAY:-:1}
+    volumes:
+      - ..:/ws
+      - ../config:/config:ro
+      - ../bags:/bags
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    command: bash
+    profiles: [calib]
+    logging: *default-logging
+
   record:
     image: ${IMAGE:-smartcar-ros2}:dev
     network_mode: host

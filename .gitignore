@@ -22,6 +22,7 @@ bags/*
 config/calibration/*.bag
 config/calibration/*.pcd
 config/calibration/*.ply
+config/calibration/intrinsics/*.tar.gz
 
 # Offline SLAM benchmark outputs
 slam_output/

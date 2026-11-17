@@ -11,4 +11,10 @@ shellcheck
 yamllint
 python3-pytest
 ros-humble-rviz2
+ros-humble-camera-calibration
+ros-humble-image-view
+ros-humble-image-proc
+ros-humble-cv-bridge
+ros-humble-image-transport-plugins
+python3-opencv
 libpcap-dev

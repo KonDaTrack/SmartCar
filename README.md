@@ -81,12 +81,12 @@ The vehicle only needs Docker, `rsync`, `zstd` and the Docker Compose v2 plugin.
 
 ```text
 docker/          Dockerfile, entrypoint, apt package lists
-scripts/         build/dev/up/rviz/record/release/deploy shortcuts
+scripts/         build/dev/up/rviz/calib/record/release/deploy shortcuts
 src/             ROS 2 packages (bringup, sensors, chassis, slam, msgs)
 config/          site configs: network, dev, vehicle, calibration, rviz
 deploy/          compose files, deploy/rollback/healthcheck, systemd
 tools/           record, release, benchmark scripts
-docs/            network, sensors, workflow, deploy, troubleshooting, ADRs
+docs/            network, sensors, workflow, calibration, deploy, troubleshooting, ADRs
 tests/           unit / bag replay test notes
 bags/            local bags (gitignored)
 release-manifests/  small release manifests committed to Git
@@ -138,4 +138,5 @@ release-manifests/  small release manifests committed to Git
 - Calibration files and RViz configuration.
 - Real health checks (topic rate, TF, SLAM output).
 
+Camera intrinsics: [docs/calibration_intrinsics.md](docs/calibration_intrinsics.md).
 See [docs/workflow.md](docs/workflow.md) for the full workflow and [docs/adr/](docs/adr/) for decisions.
