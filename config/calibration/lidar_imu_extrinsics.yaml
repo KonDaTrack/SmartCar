@@ -4,7 +4,8 @@
 # These values are published by smartcar_bringup/sensors.launch.py and must be
 # kept in sync with the static_transform_publisher entries there.
 #
-# base_link is the legacy vehicle frame; rslidar and imu_link are its children.
+# base_link is the legacy vehicle frame at the rear-axle centre; rslidar,
+# imu_link and gps are its children.
 base_link_to_rslidar:
   x: 1.2
   y: 0.0
@@ -26,16 +27,20 @@ base_link_to_vx1000_link:
 
 # Raw IMU stays in the vendor NED body frame: x forward, y right, z down.
 # The 180 deg roll lets TF convert it to base_link's REP-103 z-up frame.
+# The IMU is measured 0.2 m above base_link (rear axle centre); x/y are
+# assumed zero until measured.
 base_link_to_imu_link:
   x: 0.0
   y: 0.0
-  z: 0.0
+  z: 0.2
   roll: 3.141592653589793
   pitch: 0.0
   yaw: 0.0
 
 # GPS/INS is part of the same VX1000 unified NED frame. VxView handles the
 # antenna/installation translation; the 180 deg roll matches imu_link.
+# GPS is not used in the current calibration; this zero translation is a
+# placeholder until the antenna lever arm is measured.
 base_link_to_gps:
   x: 0.0
   y: 0.0
@@ -46,6 +51,7 @@ base_link_to_gps:
 
 notes: >
   C16 x/z are measured on the vehicle; y and rpy are still unverified.
+  VX1000 IMU z is measured as 0.2 m above base_link; x/y are assumed zero.
   The 180 deg roll was determined from the calibration bag: x is forward
   (acc_x correlates with speed derivative) and z is down (rest acc_z ~= -9.8,
   right turn gyro z positive). Verify in LIO; do not compensate a wrong

@@ -23,6 +23,11 @@ last ROS run logs.
   `base_link -> ...` static TF has a 180 deg roll so TF converts them to
   REP-103 (x forward, y left, z up). VxView handles installation translation
   and any orientation configured inside the unit.
+- VX1000 INS output is configured in VxView to the vehicle rear-axle centre,
+  which is `base_link`; `base_link -> vx1000_link` therefore has zero
+  translation. The raw IMU is measured 0.2 m above `base_link`; its x/y are
+  assumed zero until measured. `gps` is not used in the current calibration,
+  so its zero translation is a placeholder.
 - Camera USB: the D435i **must** be connected to a USB 3 SuperSpeed port
   (`lsusb -t` shows `5000M`). USB 2.1 (480 Mbit/s) is not acceptable for
   calibration or the full color/depth/infra/IMU stream set.

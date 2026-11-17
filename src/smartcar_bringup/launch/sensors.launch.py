@@ -92,10 +92,14 @@ def generate_launch_description():
         #   x forward, y right, z down; at rest acc_z ~= -9.8.
         # Keep the raw values unchanged and let the TF rotate imu_link into
         # the ROS REP-103 base frame (x forward, y left, z up): 180 deg roll.
+        # Measured IMU height is 0.2 m above base_link (rear axle centre);
+        # x/y are assumed zero until measured.
         _static_tf('base_to_imu_link', 'base_link', 'imu_link',
-                   0.0, 0.0, 0.0, roll=math.pi),
+                   0.0, 0.0, 0.2, roll=math.pi),
         # GPS/INS is part of the same VX1000 unified NED frame; VxView handles
         # the antenna/installation translation. Match imu_link's 180 deg roll.
+        # GPS is not used in the current calibration; this zero translation is
+        # a placeholder until the antenna lever arm is measured.
         _static_tf('base_to_gps', 'base_link', 'gps', 0.0, 0.0, 0.0,
                    roll=math.pi),
         # Measured x/z for the D435i; y and rotation still need calibration.

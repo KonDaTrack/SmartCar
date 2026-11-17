@@ -47,7 +47,7 @@ the camera-to-host offset on the vehicle before mixing it with LiDAR/IMU.
 
 ```text
 base_link -> rslidar    x=1.2  y=0  z=1.47  rpy=0
-base_link -> imu_link    x=0  y=0  z=0  roll=pi, pitch=0, yaw=0
+base_link -> imu_link    x=0  y=0  z=0.2  roll=pi, pitch=0, yaw=0
 base_link -> vx1000_link x=0  y=0  z=0  roll=pi, pitch=0, yaw=0
 base_link -> gps         x=0  y=0  z=0  roll=pi, pitch=0, yaw=0
 base_link -> camera_link x=1.6  y=0  z=1.27  rpy=0 (x/z measured; y/rpy TBD)
@@ -69,6 +69,12 @@ NED body axes (x-forward, y-right, z-down; at rest `acc_z ~= -9.8`). Each
 `base_link -> ...` TF therefore has a 180 deg roll so TF converts them to ROS
 REP-103 (x-forward, y-left, z-up, rest `acc_z ~= +9.8`). Do not remap the raw
 IMU values in the driver. Do not hide an extrinsic error with a time offset.
+
+`vx1000_link` is the fused INS output frame; VxView is configured to place it
+at the vehicle rear-axle centre (`base_link`), hence its zero translation. The
+raw IMU is 0.2 m above `base_link`; x/y are assumed zero until measured. GPS
+is not used in the current calibration and its zero translation is a
+placeholder.
 
 ## Preliminary calibration result (20261030_065908)
 
