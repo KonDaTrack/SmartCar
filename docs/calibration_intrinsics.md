@@ -18,15 +18,47 @@ The dev image includes `camera_calibration`, `image_view`, `image_proc`,
 
 ## 2. Prerequisites
 
-- D435i connected to the vehicle USB 3 port.
-- Vehicle `sensors` container running with the camera enabled.
-- Development host on the same DDS domain as the vehicle.
+- D435i connected to USB 3; `lsusb -t` must show `5000M`.
 - A rigid checkerboard; measure the **inner corners** and **square size**.
 - X11 on the development host (`DISPLAY` should point at it).
+
+### Option A: camera on the vehicle
+
+- Vehicle `sensors` container running with the camera enabled.
+- Development host on the same DDS domain as the vehicle.
 
 Check the stream on the development host:
 
 ```bash
+ros2 topic list | grep camera
+ros2 topic hz /camera/camera/color/image_raw
+```
+
+### Option B: camera plugged into the development host
+
+Start the local D435i driver:
+
+```bash
+./scripts/calib-camera.sh
+```
+
+Stop it with:
+
+```bash
+./scripts/calib-camera-stop.sh
+```
+
+The `calib-camera` service is headless and exposes the camera topics over
+DDS. It uses `privileged: true` and `/dev:/dev`; this is intended for the
+development host only. Do not run it at the same time as the vehicle camera,
+or both will publish the same topics.
+
+If the camera serial differs, set `D435I_SERIAL` in `.env` or the environment.
+
+Check:
+
+```bash
+lsusb -t
 ros2 topic list | grep camera
 ros2 topic hz /camera/camera/color/image_raw
 ```

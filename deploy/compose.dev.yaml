@@ -110,6 +110,39 @@ services:
     profiles: [viz]
     logging: *default-logging
 
+  # Local D435i driver for intrinsic calibration. Use this when the camera is
+  # plugged directly into the development host instead of the vehicle.
+  calib-camera:
+    image: ${IMAGE:-smartcar-ros2}:dev
+    network_mode: host
+    ipc: host
+    privileged: true
+    group_add:
+      - video
+      - plugdev
+    environment: *common-env
+    volumes:
+      - /dev:/dev
+      - ../config:/config:ro
+    command: >
+      ros2 run realsense2_camera realsense2_camera_node --ros-args
+      -p serial_no:=${D435I_SERIAL:-_947522072480}
+      -p enable_color:=true
+      -p enable_depth:=true
+      -p enable_infra1:=true
+      -p enable_infra2:=true
+      -p enable_gyro:=false
+      -p enable_accel:=false
+      -p enable_sync:=true
+      -p rgb_camera.color_profile:=640x480x15
+      -p depth_module.depth_profile:=640x480x15
+      -p depth_module.infra_profile:=640x480x15
+      -p align_depth.enable:=false
+      -p pointcloud.enable:=false
+    profiles: [calib]
+    restart: "no"
+    logging: *default-logging
+
   # Interactive calibration shell with X11. The GUI stays on the dev host;
   # the vehicle only publishes camera/LiDAR topics over DDS.
   calib:
