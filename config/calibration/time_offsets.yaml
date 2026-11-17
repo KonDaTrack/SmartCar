@@ -15,23 +15,31 @@
 #
 # After changing these, record the bag name, date and LIO version in the
 # release manifest.
-updated: "2026-10-30"
-source_bag: "20261030_065908"
+updated: "2026-11-17"
+source_bag: "calib_all_sensors_20261117_v01"
 wheel_base: 1.2
 # Acceleration events (speed derivative vs IMU acc_x, corr 0.774):
 # wheel timestamps are 65 ms later, so apply -65 ms to align with the IMU.
 # The raw yaw cross-correlation was broad (+460..+710 ms) because the
 # steering command is smooth; do not use it as the timestamp offset.
 wheel_to_imu_offset_ms: -65.0
-# From C16 scan-to-scan azimuth-profile matching (2290 pairs, median
-# confidence 0.966): raw -40 ms, detrended and derivative -50 ms.
-# Positive convention: add to LiDAR timestamps to align with IMU.
-lidar_to_imu_offset_ms: -50.0
+# From C16 scan-to-scan azimuth-profile matching on the 2026-11-17 all-sensor
+# bag (1775 pairs, median confidence 0.938): raw -40 ms, detrended and
+# derivative -30 ms. Positive convention: add to LiDAR timestamps to align
+# with the IMU. Use -30 ms; the correlation peak is broad by about +/-10 ms.
+lidar_to_imu_offset_ms: -30.0
+# VINS-Fusion mono+IMU, fixed chained T_imu_cam, estimate_td=1.
+# Convention: image timestamp + td = IMU clock. Stable value over the last
+# ~60 s of the 177 s dynamic bag.
+cam_to_imu_offset_ms: 39.986
+# Derived: td_cam_lidar = td_cam_imu - td_lidar_imu
+cam_to_lidar_offset_ms: 69.986
 notes: >
   Software sync only; no PPS/PTP. Static extrinsics from autox_yuhuo_1.launch
   with a 180 deg roll on imu_link (VX1000 z-down). Steer scale 0.914 is
   provisional (integrated yaw ratio); validate with a sharper run.
-  The LiDAR-IMU time offset comes from tools/estimate_lidar_imu_offset.py,
-  not from a full extrinsic optimizer; translation/rotation are the initial
-  legacy values and may need refinement with LI-Init/OA-LICalib if LIO shows
-  a systematic tilt.
+  The LiDAR-IMU and camera time offsets come from the 2026-11-17 bags.
+  LI-Init could not initialize the full LiDAR-IMU extrinsic because the
+  vehicle only yaws (roll/pitch excitation is zero); see
+  config/calibration/results_20261117.yaml for the derived transform and
+  the camera-LiDAR calibration before using it in production.

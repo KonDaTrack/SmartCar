@@ -1,0 +1,79 @@
+# Calibration results, 2026-11-17.
+#
+# Convention: T_a_b maps a point from frame b to frame a:
+#   p_a = T_a_b * p_b
+# Frames:
+#   cam  = D435i infra1 optical frame (z forward, x right, y down)
+#   lidar = C16 point-cloud frame (`rslidar`)
+#   imu  = VX1000 raw IMU frame (`imu_link`, NED: x forward, y right, z down)
+#
+# Source bags:
+#   cam_lidar: /home/yunle/bags/calib_cam_lidar_20261117_v03
+#   dynamic:   /home/yunle/bags/calib_all_sensors_20261117_v01
+#
+# Camera intrinsics: D435i factory infra1, K from camera_info, D=0.
+# Target: checkerboard 10x7 squares, 0.10 m squares (9x6 inner corners).
+#
+# t_a_b is the origin of frame b expressed in frame a.
+transforms:
+  T_lidar_cam:
+    - [0.999393990, -0.030818437, -0.016182613, 0.049744817]
+    - [-0.018148675, -0.064622335, -0.997744747, -0.193433384]
+    - [0.029703175, 0.997433796, -0.065142487, -0.446228323]
+    - [0.000000000, 0.000000000, 0.000000000, 1.000000000]
+  T_cam_lidar:
+    - [0.999393990, -0.018148675, 0.029703175, -0.039970833]
+    - [-0.030818437, -0.064622335, 0.997433796, 0.434116151]
+    - [-0.016182613, -0.997744746, -0.065142487, -0.221260564]
+    - [0.000000000, 0.000000000, 0.000000000, 1.000000000]
+  T_imu_cam:
+    - [0.000000000, 0.000000000, 1.000000000, 1.600000000]
+    - [1.000000000, -0.000000000, 0.000000000, 0.000000000]
+    - [0.000000000, 1.000000000, 0.000000000, -1.070000000]
+    - [0.000000000, 0.000000000, 0.000000000, 1.000000000]
+  T_imu_lidar:
+    - [-0.016182613, -0.997744746, -0.065142487, 1.378739436]
+    - [0.999393990, -0.018148675, 0.029703175, -0.039970833]
+    - [-0.030818437, -0.064622335, 0.997433796, -0.635883849]
+    - [0.000000000, 0.000000000, 0.000000000, 1.000000000]
+  T_lidar_imu:
+    - [-0.016182613, 0.999393990, -0.030818437, 0.042661271]
+    - [-0.997744747, -0.018148675, -0.064622335, 1.333812313]
+    - [-0.065142487, 0.029703175, 0.997433796, 0.725253818]
+    - [0.000000000, 0.000000000, 0.000000000, 1.000000000]
+
+time_offsets:
+  # Convention: t_imu = t_sensor + td_sensor_imu.
+  # Positive means add this many seconds to the sensor timestamp.
+  td_cam_imu: 0.039986
+  td_lidar_imu: -0.030
+  td_cam_lidar: 0.069986
+
+quality:
+  # Camera-LiDAR plane fit over 13 accepted board poses.
+  plane_residual_median_m: 0.0088
+  plane_residual_p90_m: 0.0346
+  board_centre_reprojection_median_px: 21.2
+  board_centre_reprojection_max_px: 46.5
+  # VINS final time offset, stable last ~60 s of the 177 s dynamic bag.
+  vins_td_s: 0.039986
+
+methods:
+  camera_lidar: >
+    Checkerboard: solvePnP camera plane + background-differenced LiDAR board
+    points; robust point-to-plane least squares (13 inlier poses).
+  lidar_imu: >
+    LI-Init received data but could not accumulate 3-axis rotational
+    excitation because the vehicle only yaws (roll/pitch excitation = 0).
+    T_imu_lidar is derived from the measured camera-IMU mounting and the
+    calibrated camera-LiDAR transform: T_imu_lidar = T_imu_cam * inv(T_lidar_cam).
+  camera_imu_td: >
+    VINS-Fusion mono+IMU with fixed body_T_cam0 = T_imu_cam, estimate_td=1.
+  lidar_imu_td: >
+    tools/estimate_lidar_imu_offset.py; raw peak -40 ms, detrended/derivative
+    peak -30 ms. Use -30 ms; uncertainty about +/-10 ms.
+
+caveats:
+  - LiDAR-IMU full 6-DoF extrinsic was not optimized by LI-Init; it is derived.
+  - td_lidar_imu is a correlation estimate, not a full batch optimization.
+  - Verify with a straight-line/rotation LIO run before committing to production.
