@@ -45,15 +45,17 @@ The full result is in `config/calibration/results_20261117.yaml`.
 | camera-LiDAR plane residual | median `8.8 mm`, p90 `34.6 mm` |
 | board-centre reprojection | median `21.2 px`, max `46.5 px` |
 
-Camera-LiDAR extrinsic:
+Camera-LiDAR extrinsic, `T_cam_lidar` (camera <- LiDAR):
 
 ```text
-T_lidar_cam =
+T_cam_lidar =
 [ 0.999393990 -0.030818437 -0.016182613  0.049744817]
 [-0.018148675 -0.064622335 -0.997744747 -0.193433384]
 [ 0.029703175  0.997433796 -0.065142487 -0.446228323]
 [ 0.000000000  0.000000000  0.000000000  1.000000000]
 ```
+
+`T_lidar_cam` is its inverse (LiDAR <- camera).
 
 Camera-IMU extrinsic, from the measured camera/IMU mounting:
 
@@ -78,7 +80,7 @@ T_imu_cam =
   roll/pitch progress stayed at 0%. `T_imu_lidar` is therefore derived as:
 
   ```text
-  T_imu_lidar = T_imu_cam * inv(T_lidar_cam)
+  T_imu_lidar = T_imu_cam * T_cam_lidar
   ```
 
   This preserves the requested chain
@@ -90,6 +92,36 @@ T_imu_cam =
 * Before production use, validate with a straight-line and turn LIO run. A
   proper LiDAR-IMU 6-DoF calibration needs a recording with roll and pitch
   excitation (hand-rotate the sensor stack or use a rotating fixture).
+
+## Comparison with the 2026-10-30 GLIM run
+
+Local record: `/home/k/SmartCar/slam-bench/full/glim` (bag
+`20261030_080720_prepared`). The actual matrix used by GLIM was:
+
+```text
+old T_lidar_imu =
+[1  0  0 -0.96]
+[0 -1  0  0   ]
+[0  0 -1 -1.20]
+```
+
+Compared with the corrected new `T_lidar_imu`:
+
+- rotation difference: `88.33 deg`, almost exactly yaw
+  (`roll 0.93 deg`, `pitch 3.74 deg`)
+- translation difference after expressing both in `T_imu_lidar`: `0.21 m`
+- old GLIM run loop error: `22.36 m`
+
+The old GLIM log repeatedly reports:
+
+```text
+IMU prediction is not good.
+Possibly T_lidar_imu is not accurate or IMU bias is not well estimated.
+```
+
+So the old value is not a clean ground truth. The main discrepancy is the
+C16 point-cloud frame yaw: the raw cloud's forward direction is approximately
+`+y`, while the old value assumed `+x`.
 
 ## Reproduce
 
