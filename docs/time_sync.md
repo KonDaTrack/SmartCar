@@ -163,6 +163,11 @@ Without them, an all-sensor recording can drop `/VX1000_ins` and
 the 100 Hz IMU survives. Override with `MAX_CACHE_SIZE_MB`, `QOS_PROFILE` or
 `COMPRESSION_MODE`.
 
+For a long all-sensor map, set `MAX_BAG_SIZE_GB` to `0` or larger than the
+expected output. A 20 GB split pauses the recorder for about 2.6 s, which
+appears as a gap on every topic; it is harmless if the vehicle is stationary
+at that moment, but avoid a split during motion.
+
 Default topics:
 
 ```text

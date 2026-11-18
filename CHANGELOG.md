@@ -10,6 +10,9 @@
   `config/record_qos.yaml` (VX1000 subscription depth 1000). A 60 s
   all-sensor test kept INS/IMU/ODOM at 100 Hz; the previous defaults dropped
   INS/ODOM to 60-70 Hz while camera images were written.
+- Raise the VX1000 publisher history depth from 100 to 1000 frames (~10 s)
+  so a short recorder pause does not let the publisher discard the oldest
+  IMU/INS/ODOM frames.
 - Accept multi-line `RECORD_TOPICS` in `tools/record.sh`; plain `read -a`
   only used the first line and silently recorded one topic.
 - Install the Intel RealSense camera driver and image-transport compression

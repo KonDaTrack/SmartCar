@@ -97,16 +97,19 @@ public:
     // The ROS 1 driver exposes the raw gyro field in deg/s (offset 500).
     gyro_in_deg_ = declare_parameter<bool>("gyro_in_deg", true);
 
-    ins_pub_ = create_publisher<smartcar_msgs::msg::Vx1000Ins>("VX1000_ins", rclcpp::QoS(100));
-    imu_pub_ = create_publisher<smartcar_msgs::msg::Vx1000Imu>("VX1000_imu", rclcpp::QoS(100));
-    gnss_pub_ = create_publisher<smartcar_msgs::msg::Vx1000Gnss>("VX1000_gnss", rclcpp::QoS(100));
-    stat_pub_ = create_publisher<smartcar_msgs::msg::Vx1000Stat>("VX1000_stat", rclcpp::QoS(100));
-    cov_pub_ = create_publisher<smartcar_msgs::msg::Vx1000Cov>("VX1000_cov", rclcpp::QoS(100));
-    odom_pub_ = create_publisher<smartcar_msgs::msg::Vx1000Odom>("VX1000_odom", rclcpp::QoS(100));
+    // Keep about 10 s of history. A recorder cache flush can pause the
+    // subscription for ~1 s; a depth of 100 (1 s at 100 Hz) drops the oldest
+    // IMU/INS/ODOM frames during that pause even when the source is healthy.
+    ins_pub_ = create_publisher<smartcar_msgs::msg::Vx1000Ins>("VX1000_ins", rclcpp::QoS(1000));
+    imu_pub_ = create_publisher<smartcar_msgs::msg::Vx1000Imu>("VX1000_imu", rclcpp::QoS(1000));
+    gnss_pub_ = create_publisher<smartcar_msgs::msg::Vx1000Gnss>("VX1000_gnss", rclcpp::QoS(1000));
+    stat_pub_ = create_publisher<smartcar_msgs::msg::Vx1000Stat>("VX1000_stat", rclcpp::QoS(1000));
+    cov_pub_ = create_publisher<smartcar_msgs::msg::Vx1000Cov>("VX1000_cov", rclcpp::QoS(1000));
+    odom_pub_ = create_publisher<smartcar_msgs::msg::Vx1000Odom>("VX1000_odom", rclcpp::QoS(1000));
 
     if (publish_standard_) {
-      standard_imu_pub_ = create_publisher<sensor_msgs::msg::Imu>("imu/data", rclcpp::QoS(100));
-      standard_fix_pub_ = create_publisher<sensor_msgs::msg::NavSatFix>("gnss/fix", rclcpp::QoS(100));
+      standard_imu_pub_ = create_publisher<sensor_msgs::msg::Imu>("imu/data", rclcpp::QoS(1000));
+      standard_fix_pub_ = create_publisher<sensor_msgs::msg::NavSatFix>("gnss/fix", rclcpp::QoS(1000));
     }
 
     if (transport_ == "serial") {

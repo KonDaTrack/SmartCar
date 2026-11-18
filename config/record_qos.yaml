@@ -3,8 +3,8 @@
 # Started as a test after an all-sensor recording dropped /VX1000_ins and
 # /VX1000_odom to 60-70 Hz while /VX1000_imu stayed at 100 Hz. A 60 s
 # all-sensor test with this file plus --max-cache-size 128 MiB kept all
-# three at 100 Hz. The publisher offers depth 100; the recorder needs a
-# larger subscription queue while camera images are being written.
+# three at 100 Hz. The driver now offers depth 1000; this override keeps a
+# matching subscription queue while camera images are being written.
 /VX1000_imu:
   reliability: reliable
   durability: volatile
