@@ -145,6 +145,47 @@ reduces the velocity-prediction ratio, but GLIM still reports poor IMU
 prediction. The remaining error is likely dominated by time offset / IMU bias
 rather than the LiDAR-IMU orientation alone.
 
+## Camera-bridge validation of LiDAR-IMU
+
+An independent VINS run was made with `estimate_extrinsic=1`, using the
+measured camera-IMU mounting as the initial guess. It converged to:
+
+```text
+T_imu_cam_vins =
+[-0.0390 -0.0397  0.9985  1.5799]
+[ 0.9992  0.0017  0.0391 -0.0324]
+[-0.0032  0.9992  0.0396 -1.0750]
+[ 0       0       0       1     ]
+```
+
+Compared with the static mounting:
+
+```text
+rotation delta:    3.19 deg
+translation delta: 0.039 m
+```
+
+Chaining this with the checkerboard `T_cam_lidar`:
+
+```text
+T_imu_lidar_vins = T_imu_cam_vins * T_cam_lidar
+```
+
+gives a LiDAR-IMU transform within:
+
+```text
+rotation delta:    3.19 deg
+translation delta: 0.057 m
+```
+
+of the current derived `T_imu_lidar`. The old GLIM value is still about
+`90.5 deg` away in yaw.
+
+This is a useful independent cross-check of the camera-IMU leg and the
+camera-LiDAR leg, but it is not a direct 6-DoF LiDAR-IMU optimization.
+Estimating the camera-IMU extrinsic online also shifts `td_cam_imu` from
+`39.986 ms` to `45.053 ms`; the two are correlated.
+
 ## Reproduce
 
 Calibration workspace:

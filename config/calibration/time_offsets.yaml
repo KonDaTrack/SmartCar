@@ -32,8 +32,15 @@ lidar_to_imu_offset_ms: -30.0
 # Convention: image timestamp + td = IMU clock. Stable value over the last
 # ~60 s of the 177 s dynamic bag.
 cam_to_imu_offset_ms: 39.986
+# Alternative from VINS with estimate_extrinsic=1 (online camera-IMU
+# extrinsic). The online extrinsic moved by 3.19 deg / 0.039 m and shifted
+# td by +5.067 ms. Use one consistent pair (extrinsic + td), not a mix.
+cam_to_imu_offset_ms_online_extrinsic: 45.053
 # Derived: td_cam_lidar = td_cam_imu - td_lidar_imu
 cam_to_lidar_offset_ms: 69.986
+# Derived consistently with the online-extrinsic alternative:
+# 45.053 ms - (-30 ms) = 75.053 ms.
+cam_to_lidar_offset_ms_online_extrinsic: 75.053
 notes: >
   Software sync only; no PPS/PTP. Static extrinsics from autox_yuhuo_1.launch
   with a 180 deg roll on imu_link (VX1000 z-down). Steer scale 0.914 is

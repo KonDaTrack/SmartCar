@@ -98,6 +98,35 @@ comparison_old_lio:
     repeatedly reports "Possibly T_lidar_imu is not accurate" and poor IMU
     prediction, so the old value is not a clean reference.
 
+validation_camera_bridge:
+  # Independent camera-IMU estimate from VINS with estimate_extrinsic=1,
+  # then chained with the checkerboard T_cam_lidar.
+  T_imu_cam_vins:
+    - [-0.039003587, -0.039681107, 0.998450865, 1.579861802]
+    - [ 0.999233881,  0.001671616, 0.039100609, -0.032420817]
+    - [-0.003220582,  0.999210996, 0.039585507, -1.075007628]
+    - [ 0.000000000,  0.000000000, 0.000000000, 1.000000000]
+  T_imu_lidar_vins:
+    - [-0.008603000, 0.999655000, -0.024819000, 1.140060000]
+    - [ 0.999759000, 0.008097000, -0.020385000, -0.000485000]
+    - [-0.020177000, -0.024988000, -0.999484000, -1.286113000]
+    - [ 0.000000000, 0.000000000, 0.000000000, 1.000000000]
+  cam_imu_rotation_delta_deg: 3.193
+  cam_imu_translation_delta_m: 0.0385
+  lidar_imu_rotation_delta_deg: 3.193
+  lidar_imu_translation_delta_m: 0.0568
+  old_lio_rotation_delta_deg: 90.493
+  td_cam_imu_fixed_extrinsic_s: 0.039986
+  td_cam_imu_online_extrinsic_s: 0.045053
+  td_delta_s: 0.005067
+  note: >
+    VINS running with estimate_extrinsic=1 converged close to the measured
+    camera-IMU mounting. Chaining that result through the checkerboard
+    camera-LiDAR transform gives a LiDAR-IMU transform within about 3.2 deg
+    and 5.7 cm of the current value. The old GLIM value is still about 90 deg
+    away in yaw. Estimating extrinsic online shifts td by about 5 ms, so the
+    camera-IMU extrinsic and td are correlated and must be reported together.
+
 methods:
   camera_lidar: >
     Checkerboard: solvePnP camera plane + background-differenced LiDAR board
