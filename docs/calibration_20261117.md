@@ -123,6 +123,28 @@ So the old value is not a clean ground truth. The main discrepancy is the
 C16 point-cloud frame yaw: the raw cloud's forward direction is approximately
 `+y`, while the old value assumed `+x`.
 
+### Re-run with the new extrinsic
+
+The same full bag was re-run with the corrected `T_lidar_imu`:
+
+```text
+result: /home/k/SmartCar/slam-bench/new_extrinsic_full
+config: /home/k/SmartCar/slam-bench/new_extrinsic_full/config_sensors_used.json
+compare: /home/k/SmartCar/slam-bench/compare_new_vs_old
+```
+
+| Metric | Old | New |
+|---|---:|---:|
+| loop error | 22.36 m | 20.11 m |
+| IMU rotation error | 0.109 deg | 0.086 deg |
+| `IMU prediction is not good` warnings | 92 | 96 |
+| z range | -14.29 .. 14.56 m | -12.89 .. 2.92 m |
+
+The new extrinsic improves the trajectory closure and IMU rotation error, and
+reduces the velocity-prediction ratio, but GLIM still reports poor IMU
+prediction. The remaining error is likely dominated by time offset / IMU bias
+rather than the LiDAR-IMU orientation alone.
+
 ## Reproduce
 
 Calibration workspace:

@@ -74,6 +74,23 @@ comparison_old_lio:
   rotation_delta_rpy_deg: [0.929, 3.735, 88.294]
   translation_delta_T_imu_lidar_m: 0.2099
   old_lio_loop_error_m: 22.36
+  new_lio_validation:
+    bag: "20261030_080720_prepared"
+    result_dir: "/home/k/SmartCar/slam-bench/new_extrinsic_full"
+    old_loop_error_m: 22.36
+    new_loop_error_m: 20.11
+    old_imu_rot_error_deg: 0.109
+    new_imu_rot_error_deg: 0.086
+    old_imu_prediction_warning_count: 92
+    new_imu_prediction_warning_count: 96
+    old_z_minmax_m: [-14.294, 14.562]
+    new_z_minmax_m: [-12.893, 2.919]
+    conclusion: >
+      The new extrinsic roughly halves the IMU velocity-prediction ratio
+      (0.26 -> 0.21) and improves loop error by about 10%, but GLIM still
+      reports "IMU prediction is not good". The remaining warning is likely
+      dominated by time offset / IMU bias / motion model, not only the
+      orientation. Do not treat this run as a full validation.
   note: >
     The difference is essentially a yaw of about 88 degrees. The old LIO
     used the C16 point cloud as if +x were forward; the board data shows the
