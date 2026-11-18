@@ -1,9 +1,14 @@
-// VX1000 integrated navigation unit (INS/IMU/GNSS) serial driver.
+// VX1000 integrated navigation unit (INS/IMU/GNSS) driver.
 //
 // Ported from the vehicle's ROS 1 vx1000_drv. The wire protocol and scaling
 // factors are kept identical: 68-byte frames, header 0xAA 0x55, type at
 // byte 2, 64-byte payload at byte 3, checksum at byte 67 (8-bit sum of the
 // first 67 bytes).
+//
+// Two transports carry the same frames:
+//   serial  /dev/ttyUSB0 at 460800 baud (legacy FTDI output)
+//   udp     one or more 68-byte frames per datagram, typically port 9000
+// The UDP path avoids the FTDI latency timer / USB scheduling batching.
 //
 // ROS 2 additions: std_msgs/Header on every custom topic, plus standard
 // sensor_msgs/Imu and sensor_msgs/NavSatFix topics. No time sync, extrinsic
@@ -20,8 +25,11 @@
 #include <string>
 #include <vector>
 
+#include <arpa/inet.h>
 #include <fcntl.h>
+#include <netinet/in.h>
 #include <poll.h>
+#include <sys/socket.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -78,6 +86,10 @@ public:
   {
     port_ = declare_parameter<std::string>("port", "/dev/ttyUSB0");
     baudrate_ = declare_parameter<int>("baudrate", 460800);
+    transport_ = declare_parameter<std::string>("transport", "serial");
+    udp_bind_address_ = declare_parameter<std::string>("udp_bind_address", "0.0.0.0");
+    udp_port_ = declare_parameter<int>("udp_port", 9000);
+    udp_rcvbuf_ = declare_parameter<int>("udp_rcvbuf", 1024 * 1024);
     frame_id_ = declare_parameter<std::string>("frame_id", "vx1000_link");
     imu_frame_id_ = declare_parameter<std::string>("imu_frame_id", "vx1000_imu");
     gnss_frame_id_ = declare_parameter<std::string>("gnss_frame_id", "vx1000_gnss");
@@ -97,11 +109,21 @@ public:
       standard_fix_pub_ = create_publisher<sensor_msgs::msg::NavSatFix>("gnss/fix", rclcpp::QoS(100));
     }
 
-    openSerial();
-
-    RCLCPP_INFO(
-      get_logger(), "VX1000 opened %s @ %d, frame_id=%s",
-      port_.c_str(), baudrate_, frame_id_.c_str());
+    if (transport_ == "serial") {
+      openSerial();
+      RCLCPP_INFO(
+        get_logger(), "VX1000 serial opened %s @ %d, frame_id=%s",
+        port_.c_str(), baudrate_, frame_id_.c_str());
+    } else if (transport_ == "udp") {
+      openUdp();
+      RCLCPP_INFO(
+        get_logger(), "VX1000 UDP listening on %s:%d, frame_id=%s",
+        udp_bind_address_.c_str(), udp_port_, frame_id_.c_str());
+    } else {
+      throw std::invalid_argument(
+              "unsupported VX1000 transport '" + transport_ +
+              "' (expected 'serial' or 'udp')");
+    }
   }
 
   ~Vx1000Node() override
@@ -113,7 +135,7 @@ public:
 
   void run()
   {
-    std::array<uint8_t, 4096> chunk{};
+    std::array<uint8_t, 65535> chunk{};
 
     while (rclcpp::ok()) {
       pollfd pfd{};
@@ -133,20 +155,35 @@ public:
         continue;
       }
       if ((pfd.revents & (POLLERR | POLLHUP | POLLNVAL)) != 0) {
-        RCLCPP_ERROR(get_logger(), "serial device hung up (revents=0x%x)", pfd.revents);
+        RCLCPP_ERROR(get_logger(), "%s transport hung up (revents=0x%x)",
+          transport_.c_str(), pfd.revents);
         break;
       }
 
-      const ssize_t n = ::read(fd_, chunk.data(), chunk.size());
+      ssize_t n = -1;
+      if (transport_ == "udp") {
+        sockaddr_in src{};
+        socklen_t src_len = sizeof(src);
+        n = ::recvfrom(
+          fd_, chunk.data(), chunk.size(), 0,
+          reinterpret_cast<sockaddr *>(&src), &src_len);
+      } else {
+        n = ::read(fd_, chunk.data(), chunk.size());
+      }
       if (n < 0) {
         if (errno == EAGAIN || errno == EINTR) {
           continue;
         }
-        RCLCPP_ERROR(get_logger(), "read() failed: %s", std::strerror(errno));
+        RCLCPP_ERROR(
+          get_logger(), "%s receive failed: %s",
+          transport_.c_str(), std::strerror(errno));
         break;
       }
       if (n == 0) {
         continue;
+      }
+      if (transport_ == "udp") {
+        ++datagrams_;
       }
 
       buffer_.insert(buffer_.end(), chunk.data(), chunk.data() + n);
@@ -199,6 +236,41 @@ private:
               "tcsetattr(" + port_ + ") failed: " + std::strerror(errno));
     }
     ::tcflush(fd_, TCIFLUSH);
+  }
+
+  void openUdp()
+  {
+    fd_ = ::socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
+    if (fd_ < 0) {
+      throw std::runtime_error(
+              "failed to create VX1000 UDP socket: " + std::string(std::strerror(errno)));
+    }
+
+    int one = 1;
+    if (::setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) != 0) {
+      RCLCPP_WARN(
+        get_logger(), "SO_REUSEADDR failed: %s", std::strerror(errno));
+    }
+    if (udp_rcvbuf_ > 0) {
+      int rcvbuf = udp_rcvbuf_;
+      if (::setsockopt(fd_, SOL_SOCKET, SO_RCVBUF, &rcvbuf, sizeof(rcvbuf)) != 0) {
+        RCLCPP_WARN(
+          get_logger(), "SO_RCVBUF(%d) failed: %s", udp_rcvbuf_, std::strerror(errno));
+      }
+    }
+
+    sockaddr_in addr{};
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(static_cast<uint16_t>(udp_port_));
+    if (::inet_pton(AF_INET, udp_bind_address_.c_str(), &addr.sin_addr) != 1) {
+      throw std::runtime_error(
+              "invalid VX1000 UDP bind address: " + udp_bind_address_);
+    }
+    if (::bind(fd_, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)) != 0) {
+      throw std::runtime_error(
+              "failed to bind VX1000 UDP " + udp_bind_address_ + ":" +
+              std::to_string(udp_port_) + ": " + std::strerror(errno));
+    }
   }
 
   void processBuffer()
@@ -550,8 +622,10 @@ private:
 
     RCLCPP_INFO(
       get_logger(),
-      "frames=%llu ins=%llu imu=%llu gnss=%llu stat=%llu cov=%llu odom=%llu "
-      "checksum_errors=%llu dropped_bytes=%llu",
+      "transport=%s datagrams=%llu frames=%llu ins=%llu imu=%llu gnss=%llu "
+      "stat=%llu cov=%llu odom=%llu checksum_errors=%llu dropped_bytes=%llu",
+      transport_.c_str(),
+      static_cast<unsigned long long>(datagrams_),
       static_cast<unsigned long long>(frames_),
       static_cast<unsigned long long>(type_counts_[0]),
       static_cast<unsigned long long>(type_counts_[1]),
@@ -565,6 +639,10 @@ private:
 
   std::string port_;
   int baudrate_{460800};
+  std::string transport_{"serial"};
+  std::string udp_bind_address_{"0.0.0.0"};
+  int udp_port_{9000};
+  int udp_rcvbuf_{1024 * 1024};
   std::string frame_id_;
   std::string imu_frame_id_;
   std::string gnss_frame_id_;
@@ -574,6 +652,7 @@ private:
   int fd_{-1};
   std::vector<uint8_t> buffer_;
 
+  uint64_t datagrams_{0};
   uint64_t frames_{0};
   uint64_t checksum_errors_{0};
   uint64_t dropped_bytes_{0};

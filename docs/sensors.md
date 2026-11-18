@@ -9,7 +9,7 @@ last ROS run logs.
 | 3D LiDAR | LSLIDAR C16 (16-line) | Ethernet, UDP 2368/2369 | `192.168.100.201` | `/lslidar_point_cloud` (TF `rslidar`) |
 | 2D LiDAR left | RichBeam LakiBeam1 | Ethernet, UDP 2468 | `192.168.100.200` | `/scan_left` (TF `laser_left`) |
 | 2D LiDAR right | RichBeam LakiBeam1 | Ethernet, UDP 2568 | `192.168.100.210` | `/scan_right` (TF `laser_right`) |
-| GNSS/RTK + IMU | VX1000 | USB serial, 460800 | `/dev/ttyUSB0` (`/dev/gps`) | `/VX1000_ins`, `/VX1000_imu`, `/VX1000_gnss`, `/VX1000_stat`, `/VX1000_cov`, `/VX1000_odom`, `/imu/data`, `/gnss/fix` |
+| GNSS/RTK + IMU | VX1000 | USB serial, 460800; Ethernet UDP | `/dev/ttyUSB0` (`/dev/gps`); source `.100:55325` to vehicle `.10:9000` | `/VX1000_ins`, `/VX1000_imu`, `/VX1000_gnss`, `/VX1000_stat`, `/VX1000_cov`, `/VX1000_odom`, `/imu/data`, `/gnss/fix` |
 | Chassis | CAN-to-Ethernet gateway | Ethernet, UDP 4001/4002 → `.10:8002` | `192.168.100.110` | `/vehicle_status`, `/chassis/odom` |
 | Camera | Intel RealSense D435i | USB 3 | `8086:0b3a`, serial `947522072480` | `/camera/camera/*`; starts with `SMARTCAR_START_CAMERA=1`; `RECORD_CAMERA=1` records color/depth/infra; camera IMU disabled |
 
@@ -42,6 +42,11 @@ last ROS run logs.
 - The VX1000 is an integrated GNSS/RTK + IMU unit; the IMU data used by LIO
   comes from it. The D435i IMU is disabled; the camera contributes only
   color/depth/infra streams.
+- The VX1000 Ethernet output carries the same 68-byte frames as the serial
+  link (`192.168.100.100:55325` to vehicle `.10:9000`). The vehicle compose
+  defaults to `SMARTCAR_VX1000_TRANSPORT=udp`; set it to `serial` to fall back
+  to `/dev/ttyUSB0`. UDP gives a steady 100 Hz packet stream instead of the
+  FTDI latency-timer batching.
 - The chassis provides speed, steering and `total_odometer`. `smartcar_chassis`
   integrates `/vehicle_status` into `/chassis/odom` using the Ackermann model
   (`wheel_base=1.2`, `is_akm=true`). Its `chassis_odom -> base_link` TF is off

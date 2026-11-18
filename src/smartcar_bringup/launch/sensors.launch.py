@@ -109,8 +109,9 @@ def generate_launch_description():
         _static_tf('base_to_camera_link', 'base_link', 'camera_link',
                    1.6, 0.0, 1.27),
 
-        # VX1000 integrated navigation unit on /dev/ttyUSB0. Off by default so
-        # the dev machine can run this launch file without the serial device.
+        # VX1000 integrated navigation unit. Off by default so the dev machine
+        # can run this launch file without the sensor. Serial and UDP carry the
+        # same 68-byte frames; the vehicle uses the Ethernet output on port 9000.
         Node(
             package='smartcar_ins',
             executable='vx1000_node',
@@ -121,6 +122,10 @@ def generate_launch_description():
             parameters=[{
                 'port': os.environ.get('SMARTCAR_VX1000_PORT', '/dev/ttyUSB0'),
                 'baudrate': 460800,
+                'transport': os.environ.get('SMARTCAR_VX1000_TRANSPORT', 'serial'),
+                'udp_bind_address': os.environ.get('SMARTCAR_VX1000_UDP_BIND', '0.0.0.0'),
+                'udp_port': int(os.environ.get('SMARTCAR_VX1000_UDP_PORT', '9000')),
+                'udp_rcvbuf': int(os.environ.get('SMARTCAR_VX1000_UDP_RCVBUF', '1048576')),
                 'frame_id': 'vx1000_link',
                 'imu_frame_id': 'imu_link',
                 'gnss_frame_id': 'gps',

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add a UDP transport to the VX1000 driver. The Ethernet output carries the
+  same 68-byte frames as the serial link (`192.168.100.100:55325` to
+  `192.168.100.10:9000`); the vehicle compose defaults to UDP and can fall
+  back with `SMARTCAR_VX1000_TRANSPORT=serial`.
 - Install the Intel RealSense camera driver and image-transport compression
   plugins in the runtime image.
 - Publish a provisional `base_link -> camera_link` TF for the D435i; the
