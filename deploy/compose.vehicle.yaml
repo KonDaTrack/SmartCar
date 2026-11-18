@@ -87,6 +87,9 @@ services:
       BAGS_DIR: /bags
       MIN_FREE_GB: ${MIN_FREE_GB:-20}
       MAX_BAG_SIZE_GB: ${MAX_BAG_SIZE_GB:-20}
+      MAX_CACHE_SIZE_MB: ${MAX_CACHE_SIZE_MB:-128}
+      COMPRESSION_MODE: ${COMPRESSION_MODE:-none}
+      QOS_PROFILE: ${QOS_PROFILE:-/config/record_qos.yaml}
       START_SYNC_MONITOR: ${START_SYNC_MONITOR:-1}
       RECORD_CAMERA: ${RECORD_CAMERA:-0}
     volumes:

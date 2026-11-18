@@ -175,6 +175,9 @@ services:
     environment:
       <<: *common-env
       BAGS_DIR: /bags
+      MAX_CACHE_SIZE_MB: ${MAX_CACHE_SIZE_MB:-128}
+      COMPRESSION_MODE: ${COMPRESSION_MODE:-none}
+      QOS_PROFILE: ${QOS_PROFILE:-/config/record_qos.yaml}
       RECORD_CAMERA: ${RECORD_CAMERA:-0}
     volumes:
       - ..:/ws

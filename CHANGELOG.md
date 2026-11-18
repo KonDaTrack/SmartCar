@@ -6,6 +6,12 @@
   same 68-byte frames as the serial link (`192.168.100.100:55325` to
   `192.168.100.10:9000`); the vehicle compose defaults to UDP and can fall
   back with `SMARTCAR_VX1000_TRANSPORT=serial`.
+- Raise the rosbag2 recorder cache to 128 MiB and add
+  `config/record_qos.yaml` (VX1000 subscription depth 1000). A 60 s
+  all-sensor test kept INS/IMU/ODOM at 100 Hz; the previous defaults dropped
+  INS/ODOM to 60-70 Hz while camera images were written.
+- Accept multi-line `RECORD_TOPICS` in `tools/record.sh`; plain `read -a`
+  only used the first line and silently recorded one topic.
 - Install the Intel RealSense camera driver and image-transport compression
   plugins in the runtime image.
 - Publish a provisional `base_link -> camera_link` TF for the D435i; the

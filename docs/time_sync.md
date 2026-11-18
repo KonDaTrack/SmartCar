@@ -150,10 +150,18 @@ To include the camera streams:
 RECORD_CAMERA=1 docker compose -f deploy/compose.vehicle.yaml --profile record run --rm record
 ```
 
-The recorder writes MCAP + zstd to `SMARTCAR_BAGS_HOST_DIR`
-(default `/home/yunle/bags`), splits at `MAX_BAG_SIZE_GB`, refuses to start
-below `MIN_FREE_GB`, and stops cleanly on Ctrl-C so the MCAP metadata is
-finalized.
+The recorder writes MCAP to `SMARTCAR_BAGS_HOST_DIR` (default
+`/home/yunle/bags`), splits at `MAX_BAG_SIZE_GB`, refuses to start below
+`MIN_FREE_GB`, and stops cleanly on Ctrl-C so the MCAP metadata is finalized.
+Compression is off by default (`COMPRESSION_MODE=none`); set it to `file` to
+write zstd when disk space matters.
+
+The recorder uses a 128 MiB per-topic cache and applies
+`config/record_qos.yaml`, which raises the VX1000 subscription depth to 1000.
+Without them, an all-sensor recording can drop `/VX1000_ins` and
+`/VX1000_odom` to 60–70 Hz while camera images are being written, even though
+the 100 Hz IMU survives. Override with `MAX_CACHE_SIZE_MB`, `QOS_PROFILE` or
+`COMPRESSION_MODE`.
 
 Default topics:
 
