@@ -186,6 +186,32 @@ camera-LiDAR leg, but it is not a direct 6-DoF LiDAR-IMU optimization.
 Estimating the camera-IMU extrinsic online also shifts `td_cam_imu` from
 `39.986 ms` to `45.053 ms`; the two are correlated.
 
+## Static roll/pitch check without vehicle motion
+
+A ground-plane/gravity check was made on a stationary window of the
+all-sensor bag (`t=1794906567.532`, gyro norm mean `0.0020 rad/s`):
+
+```text
+LiDAR ground-plane normal (LiDAR frame): [ 0.0135,  0.0156,  0.9998]
+IMU specific force (IMU frame):          [ 0.0060,  0.0200, -0.9998]
+```
+
+After applying the current `T_imu_lidar`, the angle between the two
+directions is:
+
+```text
+current derived T_imu_lidar: 3.429 deg
+old static roll=pi value:     2.085 deg
+```
+
+The current yaw/lever-arm result is supported by the camera bridge, but its
+roll/pitch is slightly worse than the old static roll=pi assumption. A
+minimal roll/pitch correction (3.429 deg about
+`[0.3869, -0.92198, -0.01612]`) aligns the ground normal to gravity; the
+corrected matrix is stored under `gravity_ground_roll_pitch_check` in the
+results YAML. This is only a 2-DoF static check and does not replace a
+6-DoF calibration.
+
 ## Reproduce
 
 Calibration workspace:

@@ -127,6 +127,31 @@ validation_camera_bridge:
     away in yaw. Estimating extrinsic online shifts td by about 5 ms, so the
     camera-IMU extrinsic and td are correlated and must be reported together.
 
+gravity_ground_roll_pitch_check:
+  # Static window from the 2026-11-17 all-sensor bag: t=1794906567.532,
+  # gyro norm mean 0.0020 rad/s. LiDAR ground plane vs IMU specific force.
+  static_window_t: 1794906567.532
+  gyro_norm_mean_rad_s: 0.0020
+  ground_plane_normal_lidar: [0.0135, 0.0156, 0.9998]
+  imu_specific_force_unit: [0.0060, 0.0200, -0.9998]
+  angle_current_T_imu_lidar_deg: 3.429
+  angle_old_static_roll_pi_deg: 2.085
+  correction_axis: [0.3869, -0.92198, -0.01612]
+  correction_angle_deg: 3.429
+  corrected_T_imu_lidar:
+    - [0.030984440, 0.999469720, -0.010012050, 1.153771680]
+    - [0.999497560, -0.030915280, 0.006990360, 0.049744820]
+    - [0.006677120, -0.010223610, -0.999925440, -1.263433380]
+    - [0.000000000, 0.000000000, 0.000000000, 1.000000000]
+  note: >
+    The static ground-plane/gravity check constrains only roll and pitch,
+    not yaw. The current derived roll/pitch is 3.43 deg away from the
+    ground/gravity alignment; the old static roll=pi value is 2.09 deg away.
+    The corrected matrix applies the minimal roll/pitch correction while
+    keeping the current yaw and translation. It is an optional refinement,
+    not a replacement for a 6-DoF calibration, and depends on the ground
+    patch being locally planar and the IMU being at rest.
+
 methods:
   camera_lidar: >
     Checkerboard: solvePnP camera plane + background-differenced LiDAR board
