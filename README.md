@@ -1,5 +1,7 @@
 # SmartCar
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 ROS 2 Humble + Docker workspace for the SmartCar vehicle.
 
 ## Status
