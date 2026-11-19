@@ -21,6 +21,11 @@ colcon test-result --verbose
 
 # replay it
 ./scripts/replay.sh 20261025_120000
+
+# validate the wheel-IMU offset estimator with a synthetic +50 ms offset
+python3 /ws/tests/make_sync_test_bag.py /bags/sync_test_bag
+python3 /ws/tools/estimate_offsets.py /bags/sync_test_bag --wheel-base 1.2
+# expected: best wheel-IMU lag: +50.0 ms
 ```
 
 No hardware is required for CI-style unit tests. Keep hardware tests as manual

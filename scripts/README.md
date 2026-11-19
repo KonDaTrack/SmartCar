@@ -10,6 +10,8 @@ Docker/Compose command where useful.
 | `dev.sh` | `docker compose run --rm dev` |
 | `up.sh` / `down.sh` | Start/stop dev `sensors` + `slam` containers |
 | `rviz.sh` / `rviz-stop.sh` | Start/stop the dev RViz container |
+| `calib-camera.sh` / `calib-camera-stop.sh` | Start/stop a locally plugged D435i driver |
+| `calib-intrinsics.sh` | Camera intrinsic calibration GUI; saves results under `config/calibration/intrinsics/` |
 | `record.sh` | Record selected topics to `bags/` with MCAP + zstd |
 | `replay.sh [bag]` | Replay a bag with `--clock` |
 | `release.sh <ver>` | Wrapper for `tools/release.sh` |

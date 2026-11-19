@@ -9,24 +9,59 @@ last ROS run logs.
 | 3D LiDAR | LSLIDAR C16 (16-line) | Ethernet, UDP 2368/2369 | `192.168.100.201` | `/lslidar_point_cloud` (TF `rslidar`) |
 | 2D LiDAR left | RichBeam LakiBeam1 | Ethernet, UDP 2468 | `192.168.100.200` | `/scan_left` (TF `laser_left`) |
 | 2D LiDAR right | RichBeam LakiBeam1 | Ethernet, UDP 2568 | `192.168.100.210` | `/scan_right` (TF `laser_right`) |
-| GNSS/RTK + IMU | VX1000 | USB serial, 460800 | `/dev/ttyUSB0` (`/dev/gps`) | `/VX1000_imu`, `/VX1000_gnss`, `/VX1000_ins`, `/fused_fix` |
-| Chassis | CAN-to-Ethernet gateway | Ethernet, UDP 4001/4002 → `.10:8002` | `192.168.100.110` | `/vehicle_status` (speed, steer, wheel speeds, total odometer) |
-| Camera | Intel RealSense D435i | USB 3 | `8086:0b3a`, serial `947522072480` | **Not used, not recorded** |
+| GNSS/RTK + IMU | VX1000 | USB serial, 460800; Ethernet UDP | `/dev/ttyUSB0` (`/dev/gps`); source `.100:55325` to vehicle `.10:9000` | `/VX1000_ins`, `/VX1000_imu`, `/VX1000_gnss`, `/VX1000_stat`, `/VX1000_cov`, `/VX1000_odom`, `/imu/data`, `/gnss/fix` |
+| Chassis | CAN-to-Ethernet gateway | Ethernet, UDP 4001/4002 → `.10:8002` | `192.168.100.110` | `/vehicle_status`, `/chassis/odom` |
+| Camera | Intel RealSense D435i | USB 3 | `8086:0b3a`, serial `947522072480` | `/camera/camera/*`; starts with `SMARTCAR_START_CAMERA=1`; `RECORD_CAMERA=1` records color/depth/infra; camera IMU disabled |
 
 ## Mounting / TF (from the legacy launch)
 
-- 3D LiDAR: `base_link` + (x=0.96, z=1.4), frame `rslidar`.
+- 3D LiDAR: `base_link` + (x=1.2, z=1.47), frame `rslidar`.
 - Left 2D: x=1.7, y=+0.66, z=0.15, yaw ≈ +0.795 rad.
 - Right 2D: x=1.7, y=-0.66, z=0.15, yaw ≈ -0.795 rad.
-- IMU/GPS: `base_link` z=0.2, frames `imu_link` / `gps`.
+- VX1000 frames: `vx1000_link`, `gps` and raw `imu_link` all use the vendor
+  NED body axes (x forward, y right, z down; rest `acc_z=-9.8`). Each
+  `base_link -> ...` static TF has a 180 deg roll so TF converts them to
+  REP-103 (x forward, y left, z up). VxView handles installation translation
+  and any orientation configured inside the unit.
+- VX1000 INS output is configured in VxView to the vehicle rear-axle centre,
+  which is `base_link`; `base_link -> vx1000_link` therefore has zero
+  translation. The raw IMU is measured 0.2 m above `base_link`; its x/y are
+  assumed zero until measured. `gps` is not used in the current calibration,
+  so its zero translation is a placeholder.
+- Camera USB: the D435i **must** be connected to a USB 3 SuperSpeed port
+  (`lsusb -t` shows `5000M`). USB 2.1 (480 Mbit/s) is not acceptable for
+  calibration or the full color/depth/infra/IMU stream set.
+- Camera: `base_link -> camera_link` is `(1.6, 0, 1.27, rpy 0)`. The x/z
+  values are measured on the vehicle; y and rotation are still unverified.
+  The RealSense driver supplies the camera internal and optical-frame TFs.
+  Refine the launch value and `config/calibration/camera_extrinsics.yaml`
+  after calibration.
 
 ## Notes
 
-- The VX1000 is an integrated GNSS/RTK + IMU unit; the IMU data used by SLAM
-  comes from it. The RealSense built-in IMU is disabled in the legacy launch.
-- The chassis provides speed, steering, wheel speeds and `total_odometer`; it
-  does not provide a full `nav_msgs/Odometry` pose. A ROS 2 odometry node would
-  need to integrate `/vehicle_status` if wheel odometry is required.
+- The VX1000 is an integrated GNSS/RTK + IMU unit; the IMU data used by LIO
+  comes from it. The D435i IMU is disabled; the camera contributes only
+  color/depth/infra streams.
+- The VX1000 Ethernet output carries the same 68-byte frames as the serial
+  link (`192.168.100.100:55325` to vehicle `.10:9000`). The vehicle compose
+  defaults to `SMARTCAR_VX1000_TRANSPORT=udp`; set it to `serial` to fall back
+  to `/dev/ttyUSB0`. UDP gives a steady 100 Hz packet stream instead of the
+  FTDI latency-timer batching.
+- The chassis provides speed, steering and `total_odometer`. `smartcar_chassis`
+  integrates `/vehicle_status` into `/chassis/odom` using the Ackermann model
+  (`wheel_base=1.2`, `is_akm=true`). Its `chassis_odom -> base_link` TF is off
+  by default; the SLAM front-end owns `odom -> base_link`.
+- JD01 does not report usable wheel radii in the legacy driver, so
+  `left_wheel_speed` / `right_wheel_speed` are zero unless `wheel_radius` is
+  set in `config/chassis.yaml`; Ackermann odometry uses speed + steering.
+- Steering units are raw CAN 0.1 deg divided by 31.48 (legacy calibration for
+  a larger vehicle). Adjust `steer_scale` (chassis) or `steer_angle_scale`
+  (odometry) after a straight-line heading test.
+- VX1000 `utc_year` is years since 2000 on the wire; the ROS 2 driver adds
+  2000. GNSS speed and velocity components use a -100 offset.
+- `ins_lat/lon/alt` remain zero and `navi_tick=1` until the INS has a valid
+  navigation solution; GNSS-only data (`/gnss/fix`, `/VX1000_gnss`) is still
+  available.
 - 8 ultrasonic channels exist in the legacy state-machine parameters, but the
   ultrasonic driver is commented out and no data was published. Do not assume
   the hardware is installed.

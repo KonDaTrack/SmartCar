@@ -40,6 +40,8 @@ docker save "$IMAGE:$VERSION" | zstd -T0 -19 > "$OUT/image.tar.zst"
 echo "==> assembling release bundle"
 cp deploy/compose.vehicle.yaml "$OUT/"
 cp deploy/rollback.sh deploy/healthcheck.sh "$OUT/"
+mkdir -p "$OUT/udev"
+cp deploy/udev/*.rules "$OUT/udev/" 2>/dev/null || true
 cp -a config "$OUT/"
 chmod +x "$OUT/rollback.sh" "$OUT/healthcheck.sh"
 
@@ -48,6 +50,7 @@ IMAGE=$IMAGE
 IMAGE_TAG=$VERSION
 ROS_DOMAIN_ID=$ROS_DOMAIN_ID
 SMARTCAR_CONFIG_HOST_DIR=./config
+SMARTCAR_BAGS_HOST_DIR=${SMARTCAR_BAGS_HOST_DIR:-/home/yunle/bags}
 VX1000_DEVICE=$VX1000_DEVICE
 EOF
 

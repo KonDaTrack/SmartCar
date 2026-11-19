@@ -3,8 +3,21 @@ name: smartcar-vehicle
 x-common-env: &common-env
   ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
   RMW_IMPLEMENTATION: ${RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
+  ROS_LOCALHOST_ONLY: ${ROS_LOCALHOST_ONLY:-0}
+  FASTRTPS_DEFAULT_PROFILES_FILE: /config/dds/fastdds_vehicle.xml
+  ROS_STATIC_PEERS: ${ROS_STATIC_PEERS:-192.168.100.123}
   SMARTCAR_CONFIG_DIR: /config
   SMARTCAR_HOST_IP: ${VEHICLE_IP:-192.168.100.10}
+  SMARTCAR_START_INS: ${SMARTCAR_START_INS:-1}
+  SMARTCAR_START_CHASSIS: ${SMARTCAR_START_CHASSIS:-1}
+  SMARTCAR_START_CAMERA: ${SMARTCAR_START_CAMERA:-1}
+  SMARTCAR_VX1000_PORT: /dev/ttyUSB0
+  # The VX1000 Ethernet output sends the same 68-byte frames to this port.
+  # Set SMARTCAR_VX1000_TRANSPORT=serial to fall back to /dev/ttyUSB0.
+  SMARTCAR_VX1000_TRANSPORT: ${SMARTCAR_VX1000_TRANSPORT:-udp}
+  SMARTCAR_VX1000_UDP_BIND: ${SMARTCAR_VX1000_UDP_BIND:-0.0.0.0}
+  SMARTCAR_VX1000_UDP_PORT: ${SMARTCAR_VX1000_UDP_PORT:-9000}
+  SMARTCAR_VX1000_UDP_RCVBUF: ${SMARTCAR_VX1000_UDP_RCVBUF:-1048576}
 
 x-logging: &default-logging
   driver: json-file
@@ -17,15 +30,28 @@ services:
     image: ${IMAGE:-smartcar-ros2}:${IMAGE_TAG:-dev}
     network_mode: host
     ipc: host
+    # The D435i IMU uses HID/IIO and needs writable IIO sysfs entries.
+    privileged: true
     environment: *common-env
     devices:
       - ${VX1000_DEVICE:-/dev/ttyUSB0}:/dev/ttyUSB0
+      # RealSense uses the V4L2 video nodes as well as /dev/bus/usb.
+      - /dev/video0
+      - /dev/video1
+      - /dev/video2
+      - /dev/video3
+      - /dev/video4
+      - /dev/video5
     group_add:
       - dialout
+      - plugdev
     volumes:
       - ${SMARTCAR_CONFIG_HOST_DIR:-../config}:/config:ro
+      - /dev/bus/usb:/dev/bus/usb
+    device_cgroup_rules:
+      - 'c 189:* rmw'
     command: ros2 launch smartcar_bringup sensors.launch.py
-    restart: unless-stopped
+    restart: "no"
     logging: *default-logging
 
   slam:
@@ -36,7 +62,7 @@ services:
     volumes:
       - ${SMARTCAR_CONFIG_HOST_DIR:-../config}:/config:ro
     command: ros2 launch smartcar_bringup slam.launch.py
-    restart: unless-stopped
+    restart: "no"
     logging: *default-logging
     # cpuset: "2-3"
 
@@ -48,22 +74,58 @@ services:
     volumes:
       - ${SMARTCAR_CONFIG_HOST_DIR:-../config}:/config:ro
     command: ros2 launch smartcar_bringup chassis.launch.py
-    restart: unless-stopped
+    restart: "no"
     profiles: [chassis]
+    logging: *default-logging
+
+  record:
+    image: ${IMAGE:-smartcar-ros2}:${IMAGE_TAG:-dev}
+    network_mode: host
+    ipc: host
+    environment:
+      <<: *common-env
+      BAGS_DIR: /bags
+      MIN_FREE_GB: ${MIN_FREE_GB:-20}
+      MAX_BAG_SIZE_GB: ${MAX_BAG_SIZE_GB:-20}
+      MAX_CACHE_SIZE_MB: ${MAX_CACHE_SIZE_MB:-128}
+      COMPRESSION_MODE: ${COMPRESSION_MODE:-none}
+      QOS_PROFILE: ${QOS_PROFILE:-/config/record_qos.yaml}
+      START_SYNC_MONITOR: ${START_SYNC_MONITOR:-1}
+      RECORD_CAMERA: ${RECORD_CAMERA:-0}
+    volumes:
+      - ${SMARTCAR_BAGS_HOST_DIR:-/home/yunle/bags}:/bags
+      - ${SMARTCAR_CONFIG_HOST_DIR:-../config}:/config:ro
+    command: /usr/local/bin/record.sh
+    profiles: [record]
+    restart: "no"
+    # File compression at shutdown can take minutes. Do not SIGKILL the
+    # recorder before it writes metadata and the BAG READY marker.
+    stop_grace_period: 10m
     logging: *default-logging
 
   vehicle:
     image: ${IMAGE:-smartcar-ros2}:${IMAGE_TAG:-dev}
     network_mode: host
     ipc: host
+    privileged: true
     environment: *common-env
     devices:
       - ${VX1000_DEVICE:-/dev/ttyUSB0}:/dev/ttyUSB0
+      - /dev/video0
+      - /dev/video1
+      - /dev/video2
+      - /dev/video3
+      - /dev/video4
+      - /dev/video5
     group_add:
       - dialout
+      - plugdev
     volumes:
       - ${SMARTCAR_CONFIG_HOST_DIR:-../config}:/config:ro
+      - /dev/bus/usb:/dev/bus/usb
+    device_cgroup_rules:
+      - 'c 189:* rmw'
     command: ros2 launch smartcar_bringup vehicle.launch.py
-    restart: unless-stopped
+    restart: "no"
     profiles: [combined]
     logging: *default-logging

@@ -27,7 +27,7 @@ Single source of truth: [`config/network.yaml`](../config/network.yaml).
             ├── 192.168.100.201  3D 雷达 LSLIDAR C16（UDP 2368/2369）
             ├── 192.168.100.210  右侧 2D 雷达 LakiBeam1（UDP 2568）
             ├── 192.168.100.123  开发机 / 笔记本
-            └── 192.168.100.100  未识别设备（无开放 TCP/SNMP/SSDP）
+            └── 192.168.100.100  VX1000 车载以太网（UDP 55325 → .10:9000）
 ```
 
 | IP | Device | Notes |
@@ -40,7 +40,7 @@ Single source of truth: [`config/network.yaml`](../config/network.yaml).
 | 192.168.100.200 | 2D LiDAR left | LakiBeam1, UDP 2468 |
 | 192.168.100.201 | 3D LiDAR | LSLIDAR C16, UDP 2368/2369 |
 | 192.168.100.210 | 2D LiDAR right | LakiBeam1, UDP 2568 |
-| 192.168.100.100 | Unknown | TTL 255, STMicro MAC, no services; likely switch/embedded |
+| 192.168.100.100 | VX1000 Ethernet | UDP source port 55325 to vehicle `.10:9000`; 100 Hz packet stream |
 
 Notes:
 

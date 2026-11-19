@@ -41,10 +41,15 @@ RUN apt-get update \
 COPY docker/create-user.sh /tmp/create-user.sh
 RUN bash /tmp/create-user.sh && rm -f /tmp/create-user.sh
 
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 ENV ROS_DISTRO=${ROS_DISTRO}
 ENV HOME=/home/smartcar
 WORKDIR /ws
 USER smartcar
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["bash"]
 
 # ---------------------------------------------------------------------------
 # Builder: source is copied and compiled. Do NOT use --symlink-install here:
@@ -58,8 +63,11 @@ SHELL ["/bin/bash", "-lc"]
 USER root
 
 COPY src /ws/src
+# kinematic_icp is an offline benchmark package: it FetchContent-downloads
+# KISS-ICP from GitHub and is not part of the vehicle runtime.
 RUN source /opt/ros/${ROS_DISTRO}/setup.bash \
  && colcon build --merge-install --install-base /ws/install \
+      --packages-skip kinematic_icp \
       --cmake-args -DCMAKE_BUILD_TYPE=Release
 
 # ---------------------------------------------------------------------------
@@ -72,7 +80,8 @@ SHELL ["/bin/bash", "-lc"]
 
 COPY --from=builder /ws/install /ws/install
 COPY docker/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+COPY tools/record.sh tools/sync_monitor.py /usr/local/bin/
+RUN chmod +x /entrypoint.sh /usr/local/bin/record.sh /usr/local/bin/sync_monitor.py
 
 ENV ROS_DISTRO=${ROS_DISTRO}
 ENV HOME=/home/smartcar

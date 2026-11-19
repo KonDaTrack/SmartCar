@@ -1,0 +1,271 @@
+# SLAM benchmark: GLIM vs KISS-SLAM vs Kinematic-ICP
+
+Date: 2026-10-30. All three ran offline in the persistent
+`smartcar-slam-bench` container on the development machine (24 cores,
+RTX 5060; GLIM and Kinematic were CPU-only). The input is the recorded
+vehicle bag `20261030_080720`:
+
+- 637.8 s, C16 at 10 Hz (6,368 scans), VX1000 IMU at 100 Hz,
+  chassis odometry at 100 Hz.
+- The route includes a climb of roughly 9–14 m; the chassis odometry is
+  planar and therefore not an altitude reference.
+
+## Input preparation
+
+The raw bag is unchanged. A derived, uncompressed MCAP was written for the
+benchmark because the C16 driver stamps `header.stamp` at the **sweep end**
+while `point.time` is 0..0.1 s relative to the **sweep start**, and the bag
+has no `/tf` (chassis TF was disabled):
+
+- C16 header moved back by the measured scan duration (median 100.0 ms),
+  so `header.stamp` is the scan start and `point.time` remains 0..0.1 s.
+- `/tf` synthesized from `/chassis/odom` (`chassis_odom -> base_link`) so
+  Kinematic-ICP can use the wheel prior.
+- `/imu/data`, `/chassis/odom`, `/tf_static` copied as-is.
+
+The derived bag is 5.2 GB and has 197,697 messages. It is at
+`/home/k/SmartCar/slam-bench/bags/20261030_080720_prepared` on the host
+(`/results/bags/...` in the container). Preparation script:
+`tools/slam_bench/prepare_bag.py`.
+
+## Configurations
+
+| Candidate | Settings |
+|---|---|
+| GLIM 1.2.2 | CPU configs (`config_odometry_cpu.json`, `config_sub_mapping_cpu.json`, `config_global_mapping_cpu.json`), `T_lidar_imu = [-0.96, 0, -1.2, 1, 0, 0, 0]`, `imu_time_offset = 0`, `points_time_offset = 0`, headless (memory-monitor extension only) |
+| KISS-SLAM 0.0.2 | default outdoor config, `kiss_slam_pipeline <bag> --topic /lslidar_point_cloud`; LiDAR only |
+| Kinematic-ICP 0.1.1 | `voxel_size = 0.25 m`, `max_range = 50 m`, `max_num_iterations = 20`, `tf_timeout = 0.1 s`, wheel frame `chassis_odom`, base `base_link`; offline TF/spin patch applied |
+
+Notes:
+
+- Kinematic-ICP's default `voxel_size = 1.0` is too coarse for the C16 here;
+  it under-estimated the path by roughly 2x (11 m vs 20.7 m over a 45 s
+  clip). `0.25 m` recovers the wheel-odometry scale.
+- GLIM's `imu_time_offset` was swept over `0`, `+0.05`, `-0.05` s on a
+  45 s clip; path length changed by <1%, so the zero offset was used for
+  the full run. GLIM still logs an IMU-validation warning (see below).
+- KISS-SLAM is LiDAR-only; it does not use the IMU or wheel odometry.
+
+## Results (full bag)
+
+| Metric | GLIM | KISS-SLAM | Kinematic-ICP | Chassis odom (reference) |
+|---|---:|---:|---:|---:|
+| Poses | 6,337 | 6,368 | 6,358 | 63,773 |
+| 2-D path length | 674.3 m | **705.0 m** | 699.9 m | 716.1 m |
+| 3-D path length | 685.2 m | 709.6 m | 699.9 m (2-D) | 716.1 m |
+| 2-D start/end distance | 18.0 m | **5.0 m** | 245.3 m | 90.3 m |
+| Z range | -14.3 .. +14.6 m | -6.3 .. +11.6 m | 0 (2-D) | 0 |
+| Wall time (dev) | 110.2 s | **67.6 s** | 291.0 s | — |
+| CPU time | 300.8 s | 934.1 s | 290.6 s | — |
+| Peak RSS | 2,225 MB | 1,678 MB | 1,003 MB | — |
+| Loop closures | 5 non-sequential factors (60 matching factors, 137 submaps) | 0 reported | none | — |
+| Map output | 137 submaps, 301 MB dump | 5 local-map PLYs, 12 MB | none | — |
+
+GLIM vs KISS-SLAM in 2-D, after interpolating onto the same time grid:
+mean 4.91 m, median 1.59 m, p95 15.5 m, final 14.9 m.
+
+![Start-normalized top view](benchmarks_trajectories.png)
+
+The blue (GLIM) and orange (KISS-SLAM) paths overlap for most of the lap.
+The green Kinematic-ICP path and the red chassis odometry path both depart
+from the LiDAR-only tracks; the chassis odometry is not a usable reference
+for this recording.
+
+### Parameter details
+
+| Parameter | GLIM | KISS-SLAM (default) | Kinematic-ICP |
+|---|---|---|---|
+| Sensor use | LiDAR + IMU | LiDAR only | LiDAR + wheel odom |
+| Front end | continuous-time LiDAR-IMU, GICP/VGICP | KISS-ICP point-to-point | 2-D unicycle + point-to-plane ICP |
+| Max range | 100 m | 100 m | 50 m |
+| Voxel / map resolution | 1.0 m preprocess, 0.5 m VGICP, 1.0 m iVox | 1.0 m odometry, 0.5 m local map | 0.25 m |
+| Key tuning | 2 threads, smoother lag 5 s, implicit loop distance 100 m, min overlap 0.2 | split 100 m, loop inliers 5, overlap 0.4 | 20 ICP iterations, adaptive odom regularization, TF timeout 0.1 s |
+| Time offset | `imu_time_offset = 0`, `points_time_offset = 0` | n/a | uses odom TF |
+| Extrinsic | `T_lidar_imu = [-0.96, 0, -1.2, 1, 0, 0, 0]` | n/a (LiDAR frame only) | `base_link -> rslidar` static TF |
+| Loop closure | implicit submap matching | local-map density/ORB + ICP | none (2-D odometry only) |
+
+The tuned KISS-SLAM run changes only the loop gates: local-map split 50 m,
+`inliers_threshold = 3`, `overlap_threshold = 0.25`. It produces 13 local
+maps and 2 accepted closures.
+
+### Trajectory deviations
+
+Pairwise 2-D deviation after subtracting each trajectory's first pose
+(no rigid alignment; Kinematic starts in the chassis-odom frame):
+
+| Pair | Mean | Median | p95 | End |
+|---|---:|---:|---:|---:|
+| GLIM vs KISS default | 4.89 m | 1.59 m | 15.51 m | 14.85 m |
+| GLIM vs KISS tuned | 4.78 m | 1.61 m | 14.48 m | 13.81 m |
+| KISS default vs KISS tuned | 0.86 m | 0.71 m | 2.36 m | 2.11 m |
+| Kinematic vs KISS tuned | 136.76 m | 127.02 m | 268.71 m | 240.80 m |
+
+Relative to the chassis-odometry length (716.1 m, itself not ground truth):
+GLIM -5.8%, KISS default -1.6%, KISS tuned -1.7%, Kinematic -2.3%.
+The KISS tuned run has the best loop/path ratio: 4.6 m / 704.0 m = 0.65%,
+versus KISS default 0.71%, GLIM 2.7%, and Kinematic 35%.
+
+Tuned KISS-SLAM metrics: 6,368 poses, 2-D path 704.0 m, 3-D path 709.2 m,
+2-D/3-D loop error 4.6 m, Z range -0.36..+21.06 m, end Z -0.30 m,
+2 closures, 71.1 s wall / 940.8 s CPU / 1,555 MB RSS. The larger Z range
+compared with the default run (max +11.6 m) means the accepted closures also
+moved the trajectory vertically; inspect the climb before treating the tuned
+result as metrically correct.
+
+### What the numbers mean
+
+- **KISS-SLAM** is the best self-consistent run on this bag: its 2-D path is
+  within 1.6% of the chassis odometry length, and its final position is 5 m
+  from the start. It reports no loop closures, so the 5 m figure is residual
+  drift, not an optimized loop closure. It is LiDAR-only and therefore
+  insensitive to the IMU time offset and extrinsic errors.
+- **GLIM** is stable enough to finish and produces a globally optimized
+  trajectory, but is about 6% shorter than the wheel path and ends 18 m from
+  the start. It has occasional large steps (max 0.59 m, peak speed
+  5.9 m/s versus a 1.5 m/s vehicle maximum), and logs
+  “IMU prediction is not good / T_lidar_imu may not be accurate”. The IMU
+  extrinsic, time offset, and IMU noise need another tuning pass before it
+  is trusted as the live estimator.
+- **Kinematic-ICP** matches the chassis odometry for the first ~40 s
+  (ratio 0.98), then diverges; by 120 s the 2-D position is 38 m away from
+  the wheel path, and the final position is 245 m from the start. The
+  route's climb is outside its planar motion model, and the chassis
+  odometry itself is questionable (see below). It is not suitable for this
+  site as-is.
+
+### Why KISS-SLAM reported 0 closures
+
+KISS-SLAM's loop closure is **local-map level**, not scan-to-scan. It
+attempts a closure only when a local map is split (default
+`splitting_distance = 100 m`) and once at the end of the run. The final
+candidate must pass both the MapClosures inlier gate (`inliers_threshold = 5`)
+and the ICP overlap gate (`overlap_threshold = 0.4`).
+
+This recording has only five local maps. The final pose is 5 m horizontally
+from the start, but it is about 6.2 m lower and roughly 126 deg away in
+heading; the final local map only partially overlaps the start-area local
+map. The candidate overlaps observed with a looser detector were
+0.052, 0.100, 0.255 and 0.377; all are below the default 0.4, so every
+candidate was rejected. No candidate passed the default inlier gate either,
+which is why the default log contains no “Closure Detected” line.
+
+Re-running with a site-tuned config fixes this:
+
+```yaml
+local_mapper:
+  voxel_size: 0.5
+  splitting_distance: 50.0
+loop_closer:
+  detector:
+    inliers_threshold: 3
+  overlap_threshold: 0.25
+```
+
+It produces 13 local maps and accepts 2 closures (overlaps 0.255 and 0.377).
+The end pose changes from `z = -6.24 m, 3-D loop error 8.0 m` to
+`z = -0.3 m, 3-D loop error 4.6 m`; the 2-D path is 704.0 m. This confirms
+the loop is real and that the default gates were too strict for this
+start/end geometry, not that the vehicle failed to drive a loop.
+
+The tuned config is `tools/slam_bench/kiss_loop_loose.yaml`. Lowering the
+gates can also admit false loops, so keep the overlap gate and inspect the
+accepted closure locations on the trajectory plot. For a production run,
+drive through the start pose (same heading, same level) and continue a few
+metres past it so the final local map has enough overlap.
+
+### Chassis odometry caveat
+
+The chassis odometry and both LiDAR trajectories disagree in the sign of the
+lateral axis: KISS-SLAM and GLIM both turn towards +y, while `/chassis/odom`
+turns towards -y. The wheel odometry also ends 90 m from the start after a
+716 m run. Before using wheel odometry as a prior (Kinematic-ICP) or for
+fusion, verify:
+
+1. the C16 point-cloud y-axis convention and the `base_link -> rslidar`
+   static transform;
+2. the steering-angle sign and `steer_scale` in `config/chassis.yaml`.
+
+This is separate from the SLAM comparison; KISS-SLAM and GLIM do not consume
+the wheel odometry.
+
+## Saved maps
+
+The benchmark outputs are kept on the development machine:
+
+| Map | File | Points | Size |
+|---|---|---:|---:|
+| KISS-SLAM raw (default gates) | `/home/k/SmartCar/slam-bench/full/kiss/kiss_map_raw.pcd` | 512,383 | 12 MB |
+| KISS-SLAM raw (tuned loop, 2 closures) | `/home/k/SmartCar/slam-bench/full/kiss_loose/kiss_loose_map_raw.pcd` | 672,615 | 16 MB |
+| KISS-SLAM 0.1 m (default gates) | `/home/k/SmartCar/slam-bench/full/kiss/kiss_map.pcd` | 509,944 | 12 MB |
+| GLIM raw | `/home/k/SmartCar/slam-bench/full/glim/glim_map_raw.pcd` | 5,778,891 | 67 MB |
+| GLIM 0.1 m | `/home/k/SmartCar/slam-bench/full/glim/glim_map.pcd` | 5,302,597 | 61 MB |
+| Kinematic-ICP | not saved by the offline node | — | — |
+
+The `*_raw.pcd` files are the unsampled merges of the maps the SLAM systems
+saved; the 0.1 m versions are for quick viewing. KISS-SLAM's five local-map
+PLYs were merged directly (the PLYs are already the system's own voxelized
+local maps). GLIM's 137 submaps were transformed by each submap's
+`T_world_origin` and merged. The maps are in each algorithm's own world
+frame; align them in CloudCompare or a similar viewer before comparing
+geometry. The KISS map keeps the PLY normals, which is why its PCD has
+`normal_x/y/z` fields. Export script: `tools/slam_bench/export_maps.py`
+(`--voxel 0` keeps raw density; default is now 0).
+
+Kinematic-ICP's offline node only writes a TUM trajectory; if its local map is
+needed, run the online node on bag playback and record
+`/kinematic_icp/local_map`.
+
+## Recommendation
+
+- **Offline map of this bag:** KISS-SLAM. Best trajectory consistency,
+  smallest loop error, usable local maps, and no dependence on the IMU/wheel
+  calibration. It is a Python offline pipeline, not a live ROS 2 node.
+- **Live ROS 2:** GLIM is the only one of the three that is a native ROS 2
+  node. Use it only after fixing the IMU-validation warning and checking the
+  large-step/loop behavior. If live operation can tolerate a LiDAR-only
+  front end, use the KISS-SLAM ROS 2 wrapper (or KISS-ICP + EKF) instead.
+- **Kinematic-ICP:** keep only for flat sites and only after the chassis
+  odometry sign/scale is verified. It needs the patched offline TF handling
+  and a C16-appropriate voxel size.
+
+## Reproduce
+
+```bash
+# one-time, inside a persistent smartcar-ros2:dev container
+docker exec -u root smartcar-slam-bench bash /ws/tools/slam_bench/setup.sh
+
+# derive the benchmark bag from the raw recording
+docker exec smartcar-slam-bench python3 /ws/tools/slam_bench/prepare_bag.py \
+  /bags-bench/20261030_080720 /results/bags/20261030_080720_prepared
+
+# GLIM (stops itself after the CPU goes idle and writes /tmp/dump)
+docker exec smartcar-slam-bench python3 /ws/tools/slam_bench/run_timed.py \
+  --out /results/full/glim/time.json --idle-stop --min-runtime 20 \
+  --idle-window 10 --max-runtime 600 -- \
+  bash /ws/tools/slam_bench/env.sh ros2 run glim_ros glim_rosbag \
+  /results/bags/20261030_080720_prepared
+
+# KISS-SLAM (writes ./slam_output/<timestamp>)
+docker exec -w /results/full/kiss smartcar-slam-bench \
+  kiss_slam_pipeline /results/bags/20261030_080720_prepared \
+  --topic /lslidar_point_cloud
+
+# Kinematic-ICP
+docker exec smartcar-slam-bench python3 /ws/tools/slam_bench/run_timed.py \
+  --out /results/full/kinematic/time.json --max-runtime 900 -- \
+  bash /ws/tools/slam_bench/env.sh ros2 run kinematic_icp \
+  kinematic_icp_offline_node --ros-args \
+  -p lidar_topic:=/lslidar_point_cloud \
+  -p bag_filename:=/results/bags/20261030_080720_prepared \
+  -p output_dir:=/results/full/kinematic \
+  -p use_2d_lidar:=false -p lidar_odom_frame:=odom_lidar \
+  -p wheel_odom_frame:=chassis_odom -p base_frame:=base_link \
+  -p publish_odom_tf:=false -p invert_odom_tf:=true \
+  -p tf_timeout:=0.1 -p voxel_size:=0.25 -p max_range:=50.0 \
+  -p max_num_iterations:=20
+```
+
+Raw results and maps are under `/home/k/SmartCar/slam-bench/full/` on the
+development machine. The benchmark container is disposable: the setup script
+is the only persistent state, and the patched Kinematic source is kept in
+`tools/slam_bench/patches/`.

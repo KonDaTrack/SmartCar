@@ -1,0 +1,52 @@
+# Soft-sync calibration for LIO (C16 + VX1000 IMU + chassis odometry).
+#
+# These are starting values, not a substitute for hardware time sync.
+# Fill them from a motion calibration bag:
+#   python3 tools/estimate_offsets.py /bags/<bag> --wheel-base 1.2
+#
+# wheel_to_imu_offset_ms:
+#   Positive = add this many ms to wheel/vehicle_status timestamps so they
+#   line up with the IMU (convention used by tools/estimate_offsets.py).
+#
+# lidar_to_imu_offset_ms:
+#   Candidate for the LIO front-end's time_offset_lidar_to_imu. The sign
+#   convention depends on the LIO implementation; verify with a straight
+#   line and a rotation before committing.
+#
+# After changing these, record the bag name, date and LIO version in the
+# release manifest.
+updated: "2026-11-17"
+source_bag: "calib_all_sensors_20261117_v01"
+wheel_base: 1.2
+# Acceleration events (speed derivative vs IMU acc_x, corr 0.774):
+# wheel timestamps are 65 ms later, so apply -65 ms to align with the IMU.
+# The raw yaw cross-correlation was broad (+460..+710 ms) because the
+# steering command is smooth; do not use it as the timestamp offset.
+wheel_to_imu_offset_ms: -65.0
+# From C16 scan-to-scan azimuth-profile matching on the 2026-11-17 all-sensor
+# bag (1775 pairs, median confidence 0.938): raw -40 ms, detrended and
+# derivative -30 ms. Positive convention: add to LiDAR timestamps to align
+# with the IMU. Use -30 ms; the correlation peak is broad by about +/-10 ms.
+lidar_to_imu_offset_ms: -30.0
+# VINS-Fusion mono+IMU, fixed chained T_imu_cam, estimate_td=1.
+# Convention: image timestamp + td = IMU clock. Stable value over the last
+# ~60 s of the 177 s dynamic bag.
+cam_to_imu_offset_ms: 39.986
+# Alternative from VINS with estimate_extrinsic=1 (online camera-IMU
+# extrinsic). The online extrinsic moved by 3.19 deg / 0.039 m and shifted
+# td by +5.067 ms. Use one consistent pair (extrinsic + td), not a mix.
+cam_to_imu_offset_ms_online_extrinsic: 45.053
+# Derived: td_cam_lidar = td_cam_imu - td_lidar_imu
+cam_to_lidar_offset_ms: 69.986
+# Derived consistently with the online-extrinsic alternative:
+# 45.053 ms - (-30 ms) = 75.053 ms.
+cam_to_lidar_offset_ms_online_extrinsic: 75.053
+notes: >
+  Software sync only; no PPS/PTP. Static extrinsics from autox_yuhuo_1.launch
+  with a 180 deg roll on imu_link (VX1000 z-down). Steer scale 0.914 is
+  provisional (integrated yaw ratio); validate with a sharper run.
+  The LiDAR-IMU and camera time offsets come from the 2026-11-17 bags.
+  LI-Init could not initialize the full LiDAR-IMU extrinsic because the
+  vehicle only yaws (roll/pitch excitation is zero); see
+  config/calibration/results_20261117.yaml for the derived transform and
+  the camera-LiDAR calibration before using it in production.

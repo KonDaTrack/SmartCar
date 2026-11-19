@@ -13,12 +13,20 @@ releases/
 *.bag
 .env
 
+# Third-party drivers fetched by deps.repos (pinned in deps.repos)
+src/vendor/
+
 # Bags and large calibration data
 bags/*
 !bags/.gitkeep
 config/calibration/*.bag
 config/calibration/*.pcd
 config/calibration/*.ply
+config/calibration/intrinsics/*.tar.gz
+
+# Offline SLAM benchmark outputs
+slam_output/
+kiss_slam.yaml
 
 # Editors / OS
 .vscode/

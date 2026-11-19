@@ -3,7 +3,7 @@
 <package format="3">
   <name>smartcar_chassis</name>
   <version>0.1.0</version>
-  <description>ROS 2 interface to the SmartCar CAN-to-Ethernet chassis gateway.</description>
+  <description>Chassis CAN-over-UDP gateway and wheel odometry for SmartCar (JD01).</description>
   <maintainer email="dev@example.com">SmartCar Dev</maintainer>
   <license>Proprietary</license>
 
@@ -11,6 +11,10 @@
 
   <depend>rclcpp</depend>
   <depend>smartcar_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

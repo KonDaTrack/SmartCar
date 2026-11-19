@@ -3,8 +3,14 @@ name: smartcar-dev
 x-common-env: &common-env
   ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
   RMW_IMPLEMENTATION: ${RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
+  ROS_LOCALHOST_ONLY: ${ROS_LOCALHOST_ONLY:-0}
+  FASTRTPS_DEFAULT_PROFILES_FILE: /config/dds/fastdds_dev.xml
+  ROS_STATIC_PEERS: ${ROS_STATIC_PEERS:-192.168.100.10}
   SMARTCAR_CONFIG_DIR: /config
   SMARTCAR_HOST_IP: ${DEV_IP:-192.168.100.123}
+  SMARTCAR_START_INS: ${SMARTCAR_START_INS:-0}
+  SMARTCAR_START_CHASSIS: ${SMARTCAR_START_CHASSIS:-0}
+  SMARTCAR_START_CAMERA: ${SMARTCAR_START_CAMERA:-0}
 
 x-logging: &default-logging
   driver: json-file
@@ -21,10 +27,16 @@ services:
     tty: true
     working_dir: /ws
     environment: *common-env
+    group_add:
+      - dialout
+      - plugdev
     volumes:
       - ..:/ws
       - ../config:/config:ro
       - ../bags:/bags
+      - /dev/bus/usb:/dev/bus/usb
+    device_cgroup_rules:
+      - 'c 189:* rmw'
     command: bash
 
   sensors:
@@ -33,9 +45,15 @@ services:
     ipc: host
     working_dir: /ws
     environment: *common-env
+    group_add:
+      - dialout
+      - plugdev
     volumes:
       - ..:/ws
       - ../config:/config:ro
+      - /dev/bus/usb:/dev/bus/usb
+    device_cgroup_rules:
+      - 'c 189:* rmw'
     command: ros2 launch smartcar_bringup sensors.launch.py
     profiles: [split]
     logging: *default-logging
@@ -74,6 +92,81 @@ services:
     profiles: [viz]
     logging: *default-logging
 
+  # Lightweight remote viewer: no NVIDIA runtime needed.
+  rqt:
+    image: ${IMAGE:-smartcar-ros2}:dev
+    network_mode: host
+    ipc: host
+    group_add:
+      - video
+      - render
+    environment:
+      <<: *common-env
+      DISPLAY: ${DISPLAY:-:1}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      - ../config:/config:ro
+    command: rqt_image_view
+    profiles: [viz]
+    logging: *default-logging
+
+  # Local D435i driver for intrinsic calibration. Use this when the camera is
+  # plugged directly into the development host instead of the vehicle.
+  calib-camera:
+    image: ${IMAGE:-smartcar-ros2}:dev
+    network_mode: host
+    ipc: host
+    privileged: true
+    group_add:
+      - video
+      - plugdev
+    environment: *common-env
+    volumes:
+      - /dev:/dev
+      - ../config:/config:ro
+    command: >
+      ros2 run realsense2_camera realsense2_camera_node --ros-args
+      -p serial_no:=${D435I_SERIAL:-_947522072480}
+      -p enable_color:=true
+      -p enable_depth:=true
+      -p enable_infra1:=true
+      -p enable_infra2:=true
+      -p enable_gyro:=false
+      -p enable_accel:=false
+      -p enable_sync:=true
+      -p rgb_camera.color_profile:=640x480x15
+      -p depth_module.depth_profile:=640x480x15
+      -p depth_module.infra_profile:=640x480x15
+      -p align_depth.enable:=false
+      -p pointcloud.enable:=false
+    profiles: [calib]
+    restart: "no"
+    logging: *default-logging
+
+  # Interactive calibration shell with X11. The GUI stays on the dev host;
+  # the vehicle only publishes camera/LiDAR topics over DDS.
+  calib:
+    image: ${IMAGE:-smartcar-ros2}:dev
+    network_mode: host
+    ipc: host
+    working_dir: /ws
+    stdin_open: true
+    tty: true
+    group_add:
+      - video
+      - render
+    environment:
+      <<: *common-env
+      DISPLAY: ${DISPLAY:-:1}
+    volumes:
+      - ..:/ws
+      - ../config:/config:ro
+      - ../bags:/bags
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    command: bash
+    profiles: [calib]
+    logging: *default-logging
+
   record:
     image: ${IMAGE:-smartcar-ros2}:dev
     network_mode: host
@@ -82,6 +175,10 @@ services:
     environment:
       <<: *common-env
       BAGS_DIR: /bags
+      MAX_CACHE_SIZE_MB: ${MAX_CACHE_SIZE_MB:-128}
+      COMPRESSION_MODE: ${COMPRESSION_MODE:-none}
+      QOS_PROFILE: ${QOS_PROFILE:-/config/record_qos.yaml}
+      RECORD_CAMERA: ${RECORD_CAMERA:-0}
     volumes:
       - ..:/ws
       - ../config:/config:ro

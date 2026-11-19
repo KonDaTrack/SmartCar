@@ -1,0 +1,26 @@
+# Camera extrinsics.
+#
+# x/z are measured on the vehicle. y and the rotation are still unverified;
+# replace them after calibrating the D435i mounting and Camera-LiDAR/VX1000 IMU.
+#
+# Keep in sync with base_to_camera_link in
+# src/smartcar_bringup/launch/sensors.launch.py.
+#
+# Frame convention:
+#   base_link      ROS REP-103: x forward, y left, z up
+#   camera_link    RealSense body frame: x forward, y left, z up
+#   camera_*_optical_frame  z forward, x right, y down
+#
+# The D435i driver publishes camera_link -> camera_*_frame and
+# camera_*_frame -> camera_*_optical_frame itself. This file only supplies
+# the missing base_link -> camera_link transform.
+base_link_to_camera_link:
+  x: 1.6
+  y: 0.0
+  z: 1.27
+  roll: 0.0
+  pitch: 0.0
+  yaw: 0.0
+  source: "vehicle measurement for x/z; y and rotation unverified"
+  calibrated: false
+  todo: "Measure y and camera orientation; refine with Camera-LiDAR/VX1000 IMU."

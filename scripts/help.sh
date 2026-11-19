@@ -11,6 +11,9 @@ SmartCar scripts (run from anywhere; they cd to the repo root):
   ./scripts/down.sh                   Stop dev sensors + slam containers
   ./scripts/rviz.sh                   Start RViz (X11 + NVIDIA GPU)
   ./scripts/rviz-stop.sh              Stop RViz
+  ./scripts/calib-camera.sh           Start local D435i driver for calibration
+  ./scripts/calib-camera-stop.sh      Stop local D435i driver
+  ./scripts/calib-intrinsics.sh       Camera intrinsic calibration GUI
   ./scripts/record.sh                 Record a bag on the dev machine
   ./scripts/replay.sh [bag]           Replay a bag (default: latest)
   ./scripts/release.sh <ver>          Build image + release bundle

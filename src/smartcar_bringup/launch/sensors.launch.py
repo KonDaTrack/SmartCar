@@ -1,17 +1,20 @@
+import math
 import os
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, LogInfo
+from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 
 
-def _lakibeam(name, frame_id, output_topic, sensor_ip, port, host_ip):
+def _lakibeam(name, frame_id, output_topic, sensor_ip, port, host_ip, condition):
     return Node(
         package='lakibeam1',
         executable='lakibeam1_scan_node',
         name=name,
         output='screen',
+        condition=condition,
         parameters=[{
             'frame_id': frame_id,
             'output_topic': output_topic,
@@ -26,6 +29,20 @@ def _lakibeam(name, frame_id, output_topic, sensor_ip, port, host_ip):
             'scan_range_start': '45',
             'scan_range_stop': '315',
         }],
+    )
+
+
+def _static_tf(name, parent, child, x, y, z, roll=0.0, pitch=0.0, yaw=0.0):
+    return Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name=name,
+        output='screen',
+        arguments=[
+            '--x', str(x), '--y', str(y), '--z', str(z),
+            '--roll', str(roll), '--pitch', str(pitch), '--yaw', str(yaw),
+            '--frame-id', parent, '--child-frame-id', child,
+        ],
     )
 
 
@@ -45,7 +62,75 @@ def generate_launch_description():
             default_value=os.environ.get('SMARTCAR_HOST_IP', '192.168.100.123'),
             description='Host IP that the LakiBeam sensors send UDP scans to',
         ),
+        DeclareLaunchArgument(
+            'start_ins',
+            default_value=os.environ.get('SMARTCAR_START_INS', '0'),
+            description='Start the VX1000 serial driver (only on the vehicle)',
+        ),
+        DeclareLaunchArgument(
+            'start_scan2d',
+            default_value=os.environ.get('SMARTCAR_START_SCAN2D', '0'),
+            description='Start the LakiBeam 2D scanners (not needed for LIO)',
+        ),
+        DeclareLaunchArgument(
+            'start_camera',
+            default_value=os.environ.get('SMARTCAR_START_CAMERA', '0'),
+            description='Start the D435i camera (color/depth/infra; IMU disabled)',
+        ),
         LogInfo(msg=['[smartcar:sensors] config_dir=', config_dir, ' host_ip=', host_ip]),
+
+        # Static extrinsics from the active ROS 1 launch on this vehicle:
+        #   docs/autox_startup.sh -> automotive_launch/autox_yuhuo_1.launch
+        # Keep in sync with config/calibration/lidar_imu_extrinsics.yaml.
+        _static_tf('base_to_rslidar', 'base_link', 'rslidar', 1.2, 0.0, 1.47),
+        # VX1000 INS/odometry outputs use the same vendor NED body axes as the
+        # raw IMU (x forward, y right, z down). Rotate into base_link's
+        # REP-103 z-up frame; VxView handles the installation translation.
+        _static_tf('base_to_vx1000_link', 'base_link', 'vx1000_link',
+                   0.0, 0.0, 0.0, roll=math.pi),
+        # Raw VX1000 IMU is in the vendor NED body frame:
+        #   x forward, y right, z down; at rest acc_z ~= -9.8.
+        # Keep the raw values unchanged and let the TF rotate imu_link into
+        # the ROS REP-103 base frame (x forward, y left, z up): 180 deg roll.
+        # Measured IMU height is 0.2 m above base_link (rear axle centre);
+        # x/y are assumed zero until measured.
+        _static_tf('base_to_imu_link', 'base_link', 'imu_link',
+                   0.0, 0.0, 0.2, roll=math.pi),
+        # GPS/INS is part of the same VX1000 unified NED frame; VxView handles
+        # the antenna/installation translation. Match imu_link's 180 deg roll.
+        # GPS is not used in the current calibration; this zero translation is
+        # a placeholder until the antenna lever arm is measured.
+        _static_tf('base_to_gps', 'base_link', 'gps', 0.0, 0.0, 0.0,
+                   roll=math.pi),
+        # Measured x/z for the D435i; y and rotation still need calibration.
+        # The RealSense driver publishes the camera_link -> camera_*_frame
+        # and optical-frame TFs; only this vehicle-to-camera link is missing.
+        # Keep in sync with config/calibration/camera_extrinsics.yaml.
+        _static_tf('base_to_camera_link', 'base_link', 'camera_link',
+                   1.6, 0.0, 1.27),
+
+        # VX1000 integrated navigation unit. Off by default so the dev machine
+        # can run this launch file without the sensor. Serial and UDP carry the
+        # same 68-byte frames; the vehicle uses the Ethernet output on port 9000.
+        Node(
+            package='smartcar_ins',
+            executable='vx1000_node',
+            name='vx1000_node',
+            output='screen',
+            emulate_tty=True,
+            condition=IfCondition(LaunchConfiguration('start_ins')),
+            parameters=[{
+                'port': os.environ.get('SMARTCAR_VX1000_PORT', '/dev/ttyUSB0'),
+                'baudrate': 460800,
+                'transport': os.environ.get('SMARTCAR_VX1000_TRANSPORT', 'serial'),
+                'udp_bind_address': os.environ.get('SMARTCAR_VX1000_UDP_BIND', '0.0.0.0'),
+                'udp_port': int(os.environ.get('SMARTCAR_VX1000_UDP_PORT', '9000')),
+                'udp_rcvbuf': int(os.environ.get('SMARTCAR_VX1000_UDP_RCVBUF', '1048576')),
+                'frame_id': 'vx1000_link',
+                'imu_frame_id': 'imu_link',
+                'gnss_frame_id': 'gps',
+            }],
+        ),
 
         # LSLIDAR C16 (3D), ROS 2 CX driver. Namespace /cx matches the vendor
         # parameter file key. Remap the vendor topic to the project topic.
@@ -63,7 +148,39 @@ def generate_launch_description():
         # LakiBeam 2D left/right. The driver configures the sensor's destination
         # host/port, so host_ip must be the wired address of this machine.
         _lakibeam('lakibeam_left', 'laser_left', 'scan_left',
-                  '192.168.100.200', '2468', host_ip),
+                  '192.168.100.200', '2468', host_ip,
+                  IfCondition(LaunchConfiguration('start_scan2d'))),
         _lakibeam('lakibeam_right', 'laser_right', 'scan_right',
-                  '192.168.100.210', '2568', host_ip),
+                  '192.168.100.210', '2568', host_ip,
+                  IfCondition(LaunchConfiguration('start_scan2d'))),
+
+        # Intel RealSense D435i. The driver is installed in the runtime image;
+        # keep it off on the dev machine unless SMARTCAR_START_CAMERA=1 and the
+        # USB device is passed through. Topics use the /camera/... namespace;
+        # the driver publishes camera_link -> camera_*_frame TFs.
+        # The D435i IMU is intentionally disabled; VX1000 is the only IMU used
+        # for calibration and fusion. Only color/depth/infra streams remain.
+        Node(
+            package='realsense2_camera',
+            executable='realsense2_camera_node',
+            name='camera',
+            output='screen',
+            emulate_tty=True,
+            condition=IfCondition(LaunchConfiguration('start_camera')),
+            parameters=[{
+                'serial_no': '_947522072480',
+                'enable_color': True,
+                'enable_depth': True,
+                'enable_infra1': True,
+                'enable_infra2': True,
+                'enable_gyro': False,
+                'enable_accel': False,
+                'enable_sync': True,
+                'rgb_camera.color_profile': '640x480x15',
+                'depth_module.depth_profile': '640x480x15',
+                'depth_module.infra_profile': '640x480x15',
+                'align_depth.enable': False,
+                'pointcloud.enable': False,
+            }],
+        ),
     ])

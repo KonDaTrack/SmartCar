@@ -1,0 +1,40 @@
+# Chassis gateway + wheel odometry. Ported from the vehicle's ROS 1
+# can_module_usb2can / can_odometry parameters (yuhuo JD01).
+#
+# WARNING: only one process can bind UDP 8002. Stop the ROS 1
+# can_module_CANalyst_node before starting this stack on the vehicle.
+chassis_node:
+  ros__parameters:
+    bind_address: 0.0.0.0
+    local_port: 8002
+    gateway_ip: 192.168.100.110
+    car_type: JD01
+
+    # JD01 is Ackermann; wheel radius is unused (0 = wheel speed stays 0,
+    # matching the ROS 1 driver where it was never set for JD01).
+    wheel_radius: 0.0
+
+    # 0x51 reports the steering wheel angle in 0.1 deg units. The ROS 1
+    # driver divides by 31.48 (calibrated on a large vehicle). steer_scale
+    # is the small-car correction applied afterwards.
+    steer_raw_scale: 31.48
+    # Provisional from the 20261030_065908 calibration bag: the integrated
+    # IMU yaw / wheel-model yaw ratio is 0.914 (wheelbase=1.2). Re-check with
+    # a sharper calibration run and LIO before treating it as final.
+    steer_scale: 0.914
+    debug_frames: false
+
+can_odometry_node:
+  ros__parameters:
+    wheel_base: 1.2
+    is_akm: true
+    # Heading calibration: 1.0 matches the ROS 1 can_odometry behavior.
+    # Negative flips the steering sign; adjust magnitude if heading drifts.
+    steer_angle_scale: 1.0
+    # Keep chassis odometry separate from the SLAM front-end's /odom and
+    # odom -> base_link TF. Enable publish_tf only when SLAM is not running.
+    odom_topic: chassis/odom
+    odom_frame: chassis_odom
+    base_frame: base_link
+    publish_tf: false
+    max_dt: 0.5

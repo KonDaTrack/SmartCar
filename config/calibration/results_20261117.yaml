@@ -1,0 +1,174 @@
+# Calibration results, 2026-11-17 (corrected transform direction).
+#
+# Convention: T_a_b maps a point from frame b to frame a:
+#   p_a = T_a_b * p_b
+# Frames:
+#   cam  = D435i infra1 optical frame (z forward, x right, y down)
+#   lidar = C16 point-cloud frame (`rslidar`)
+#   imu  = VX1000 raw IMU frame (`imu_link`, NED: x forward, y right, z down)
+#
+# Chain (standard T_a_b notation):
+#   T_imu_cam = T_imu_lidar * T_lidar_cam
+#   T_imu_lidar = T_imu_cam * T_cam_lidar
+#
+# Source bags:
+#   cam_lidar: /home/yunle/bags/calib_cam_lidar_20261117_v03
+#   dynamic:   /home/yunle/bags/calib_all_sensors_20261117_v01
+#
+# Camera intrinsics: D435i factory infra1, K from camera_info, D=0.
+# Target: checkerboard 10x7 squares, 0.10 m squares (9x6 inner corners).
+#
+# t_a_b is the origin of frame b expressed in frame a.
+transforms:
+  T_cam_lidar:
+    - [0.999393990, -0.030818437, -0.016182613, 0.049744817]
+    - [-0.018148675, -0.064622335, -0.997744747, -0.193433384]
+    - [0.029703175, 0.997433796, -0.065142487, -0.446228323]
+    - [0.000000000, 0.000000000, 0.000000000, 1.000000000]
+  T_lidar_cam:
+    - [0.999393990, -0.018148675, 0.029703175, -0.039970833]
+    - [-0.030818437, -0.064622335, 0.997433796, 0.434116151]
+    - [-0.016182613, -0.997744746, -0.065142487, -0.221260564]
+    - [0.000000000, 0.000000000, 0.000000000, 1.000000000]
+  T_imu_cam:
+    - [0.000000000, 0.000000000, 1.000000000, 1.600000000]
+    - [1.000000000, -0.000000000, 0.000000000, 0.000000000]
+    - [0.000000000, 1.000000000, 0.000000000, -1.070000000]
+    - [0.000000000, 0.000000000, 0.000000000, 1.000000000]
+  T_imu_lidar:
+    - [0.029703175, 0.997433796, -0.065142487, 1.153771677]
+    - [0.999393990, -0.030818437, -0.016182613, 0.049744817]
+    - [-0.018148675, -0.064622335, -0.997744747, -1.263433384]
+    - [0.000000000, 0.000000000, 0.000000000, 1.000000000]
+  T_lidar_imu:
+    - [0.029703175, 0.999393990, -0.018148675, -0.106914995]
+    - [0.997433796, -0.030818437, -0.064622335, -1.230923822]
+    - [-0.065142487, -0.016182613, -0.997744746, -1.184619464]
+    - [0.000000000, 0.000000000, 0.000000000, 1.000000000]
+
+time_offsets:
+  # Convention: t_imu = t_sensor + td_sensor_imu.
+  # Positive means add this many seconds to the sensor timestamp.
+  td_cam_imu: 0.039986
+  td_lidar_imu: -0.030
+  td_cam_lidar: 0.069986
+
+quality:
+  # Camera-LiDAR plane fit over 13 accepted board poses.
+  plane_residual_median_m: 0.0088
+  plane_residual_p90_m: 0.0346
+  board_centre_reprojection_median_px: 21.2
+  board_centre_reprojection_max_px: 46.5
+  vins_td_s: 0.039986
+
+comparison_old_lio:
+  # Actual T_lidar_imu in /home/k/SmartCar/slam-bench/full/glim dump
+  # (bag 20261030_080720_prepared); GLIM repeatedly warned that it was
+  # inaccurate and that IMU prediction was poor.
+  old_T_lidar_imu:
+    - [1.000000000, 0.000000000, 0.000000000, -0.960000000]
+    - [0.000000000, -1.000000000, 0.000000000, 0.000000000]
+    - [0.000000000, 0.000000000, -1.000000000, -1.200000000]
+    - [0.000000000, 0.000000000, 0.000000000, 1.000000000]
+  rotation_delta_deg: 88.331
+  rotation_delta_rpy_deg: [0.929, 3.735, 88.294]
+  translation_delta_T_imu_lidar_m: 0.2099
+  old_lio_loop_error_m: 22.36
+  new_lio_validation:
+    bag: "20261030_080720_prepared"
+    result_dir: "/home/k/SmartCar/slam-bench/new_extrinsic_full"
+    old_loop_error_m: 22.36
+    new_loop_error_m: 20.11
+    old_imu_rot_error_deg: 0.109
+    new_imu_rot_error_deg: 0.086
+    old_imu_prediction_warning_count: 92
+    new_imu_prediction_warning_count: 96
+    old_z_minmax_m: [-14.294, 14.562]
+    new_z_minmax_m: [-12.893, 2.919]
+    conclusion: >
+      The new extrinsic roughly halves the IMU velocity-prediction ratio
+      (0.26 -> 0.21) and improves loop error by about 10%, but GLIM still
+      reports "IMU prediction is not good". The remaining warning is likely
+      dominated by time offset / IMU bias / motion model, not only the
+      orientation. Do not treat this run as a full validation.
+  note: >
+    The difference is essentially a yaw of about 88 degrees. The old LIO
+    used the C16 point cloud as if +x were forward; the board data shows the
+    raw cloud's forward direction is approximately +y. The old GLIM log
+    repeatedly reports "Possibly T_lidar_imu is not accurate" and poor IMU
+    prediction, so the old value is not a clean reference.
+
+validation_camera_bridge:
+  # Independent camera-IMU estimate from VINS with estimate_extrinsic=1,
+  # then chained with the checkerboard T_cam_lidar.
+  T_imu_cam_vins:
+    - [-0.039003587, -0.039681107, 0.998450865, 1.579861802]
+    - [ 0.999233881,  0.001671616, 0.039100609, -0.032420817]
+    - [-0.003220582,  0.999210996, 0.039585507, -1.075007628]
+    - [ 0.000000000,  0.000000000, 0.000000000, 1.000000000]
+  T_imu_lidar_vins:
+    - [-0.008603000, 0.999655000, -0.024819000, 1.140060000]
+    - [ 0.999759000, 0.008097000, -0.020385000, -0.000485000]
+    - [-0.020177000, -0.024988000, -0.999484000, -1.286113000]
+    - [ 0.000000000, 0.000000000, 0.000000000, 1.000000000]
+  cam_imu_rotation_delta_deg: 3.193
+  cam_imu_translation_delta_m: 0.0385
+  lidar_imu_rotation_delta_deg: 3.193
+  lidar_imu_translation_delta_m: 0.0568
+  old_lio_rotation_delta_deg: 90.493
+  td_cam_imu_fixed_extrinsic_s: 0.039986
+  td_cam_imu_online_extrinsic_s: 0.045053
+  td_delta_s: 0.005067
+  note: >
+    VINS running with estimate_extrinsic=1 converged close to the measured
+    camera-IMU mounting. Chaining that result through the checkerboard
+    camera-LiDAR transform gives a LiDAR-IMU transform within about 3.2 deg
+    and 5.7 cm of the current value. The old GLIM value is still about 90 deg
+    away in yaw. Estimating extrinsic online shifts td by about 5 ms, so the
+    camera-IMU extrinsic and td are correlated and must be reported together.
+
+gravity_ground_roll_pitch_check:
+  # Static window from the 2026-11-17 all-sensor bag: t=1794906567.532,
+  # gyro norm mean 0.0020 rad/s. LiDAR ground plane vs IMU specific force.
+  static_window_t: 1794906567.532
+  gyro_norm_mean_rad_s: 0.0020
+  ground_plane_normal_lidar: [0.0135, 0.0156, 0.9998]
+  imu_specific_force_unit: [0.0060, 0.0200, -0.9998]
+  angle_current_T_imu_lidar_deg: 3.429
+  angle_old_static_roll_pi_deg: 2.085
+  correction_axis: [0.3869, -0.92198, -0.01612]
+  correction_angle_deg: 3.429
+  corrected_T_imu_lidar:
+    - [0.030984440, 0.999469720, -0.010012050, 1.153771680]
+    - [0.999497560, -0.030915280, 0.006990360, 0.049744820]
+    - [0.006677120, -0.010223610, -0.999925440, -1.263433380]
+    - [0.000000000, 0.000000000, 0.000000000, 1.000000000]
+  note: >
+    The static ground-plane/gravity check constrains only roll and pitch,
+    not yaw. The current derived roll/pitch is 3.43 deg away from the
+    ground/gravity alignment; the old static roll=pi value is 2.09 deg away.
+    The corrected matrix applies the minimal roll/pitch correction while
+    keeping the current yaw and translation. It is an optional refinement,
+    not a replacement for a 6-DoF calibration, and depends on the ground
+    patch being locally planar and the IMU being at rest.
+
+methods:
+  camera_lidar: >
+    Checkerboard: solvePnP camera plane + background-differenced LiDAR board
+    points; robust point-to-plane least squares over 13 inlier poses.
+  lidar_imu: >
+    LI-Init received data but could not accumulate 3-axis rotational
+    excitation because the vehicle only yaws (roll/pitch excitation = 0).
+    T_imu_lidar is derived from the measured camera-IMU mounting and the
+    calibrated camera-LiDAR transform: T_imu_lidar = T_imu_cam * T_cam_lidar.
+  camera_imu_td: >
+    VINS-Fusion mono+IMU with fixed body_T_cam0 = T_imu_cam, estimate_td=1.
+  lidar_imu_td: >
+    tools/estimate_lidar_imu_offset.py; raw peak -40 ms, detrended/derivative
+    peak -30 ms. Use -30 ms; uncertainty about +/-10 ms.
+
+caveats:
+  - LiDAR-IMU full 6-DoF extrinsic was not optimized by LI-Init; it is derived.
+  - td_lidar_imu is a correlation estimate, not a full batch optimization.
+  - The old LIO log itself flagged T_lidar_imu as inaccurate; do not treat the
+    old value as ground truth. Validate the new value with a fresh LIO run.
